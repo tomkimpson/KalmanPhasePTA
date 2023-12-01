@@ -47,6 +47,77 @@ class Pulsars:
         self.q         = _unit_vector(np.pi/2.0 -self.δ, self.α) # 3 rows, N columns
 
 
+        #Discrete timesteps
+        self.dt      = SystemParameters.cadence * 24*3600 #from days to step_seconds
+        end_seconds  = SystemParameters.T* 365*24*3600 #from years to second
+        self.t       = np.arange(0,end_seconds,self.dt)
+        
+
+        #Process noise 
+        if SystemParameters.process_noise is True:
+            #self.σp = Read the true value from file. TODO
+            pass
+
+        elif SystemParameters.process_noise == 'Fixed':
+            self.σp = np.ones_like(self.f)*SystemParameters.σp
+
+        elif SystemParameters.process_noise == 'Random':
+            generator = np.random.default_rng(SystemParameters.seed)
+            self.σp   = generator.uniform(low = SystemParameters.σp/10,high=SystemParameters.σp*10,size=self.Npsr)
+
+        #     logging.info("You are assigning the σp terms randomly")
+        # else:
+        #     self.σp = np.full(self.Npsr,SystemParameters.σp)
+
+
+
+
+
+
+
+
+        # #Assign some other useful quantities to self
+        # #Some of these are already defined in SystemParameters, but I don't want to pass
+        # #the SystemParameters class to the Kalman filter - it should be completely blind
+        # #to the true parameters - it only knows what we tell it!
+        self.Npsr    = len(self.f) 
+        
+        # 
+        # 
+        # # 
+        # self.ephemeris = self.f + np.outer(self.t,self.fdot) 
+        # self.fprime    = self.f - self.ephemeris[0,:] #this is the scaled state variable at t=0 
+        # print(self.fprime)
+        
+        
+        
+        
+        
+        
+        
+        # 
+
+
+
+
+
+
+
+
+
+
+
+        # #Rescaling
+        # self.ephemeris = self.f + np.outer(self.t,self.fdot) 
+        # self.fprime    = self.f - self.ephemeris[0,:] #this is the scaled state variable at t=0 
+        
+
+
+
+
+
+
+
 
 
         # #Create a flattened q-vector for optimised calculations later
@@ -76,25 +147,10 @@ class Pulsars:
 
 
 
-        # #Assign some other useful quantities to self
-        # #Some of these are already defined in SystemParameters, but I don't want to pass
-        # #the SystemParameters class to the Kalman filter - it should be completely blind
-        # #to the true parameters - it only knows what we tell it!
-        # self.dt      = SystemParameters.cadence * 24*3600 #from days to step_seconds
-        # end_seconds  = SystemParameters.T* 365*24*3600 #from years to second
-        # self.t       = np.arange(0,end_seconds,self.dt)
-        # self.Npsr    = len(self.f) 
         
         # #if σp is defined then set all pulsars with that value
         # #else assign randomly within a range 
         # generator = np.random.default_rng(SystemParameters.sigma_p_seed)
-        # if SystemParameters.σp is None:
-        #     self.σp = generator.uniform(low = 1e-21,high=1e-19,size=self.Npsr)
-        #     #self.σp = generator.uniform(low = 1e-13,high=2e-13,size=self.Npsr)
-
-        #     logging.info("You are assigning the σp terms randomly")
-        # else:
-        #     self.σp = np.full(self.Npsr,SystemParameters.σp)
 
         # self.σm =  SystemParameters.σm
         # self.NF = NF 

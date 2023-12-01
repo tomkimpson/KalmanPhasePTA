@@ -13,7 +13,7 @@ class SystemParameters:
 
     def __init__(self,
                  T       = 10,           # how long to integrate for in years
-                 cadence = 7,            # the interval between observations
+                 cadence = 7,            # the interval between observations in days
                  Ω       = 5.0e-7,       # GW angular frequency
                  Φ0      = 0.20,         # GW phase offset at t=0
                  ψ       =  2.50,        # GW polarisation angle
@@ -21,9 +21,9 @@ class SystemParameters:
                  δ       =  1.0,         # GW source declination
                  α       =  1.0,         # GW source right ascension
                  h       =  5e-15,       # GW strain
-                 process_noise = True,   # the process noise on the pulsars. Any of "True", "Fixed", "Random". See pulsars.py for example
+                 process_noise = 'Fixed',   # the process noise on the pulsars. Any of "True", "Fixed", "Random". See pulsars.py for example
                  σm = 1e-11,             # measurement noise standard deviation
-                 Npsr = 0,               # Number of pulsars to use in PTA. 0 = all
+                 Npsr = 2,               # Number of pulsars to use in PTA. 0 = all
                  use_psr_terms_in_data=True, # when generating the synthetic data, include pulsar terms?
                  measurement_model='pulsar', # what do you want the KF measurement model to be? One of pulsar, earth,null
                  seed = 1234,                # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
@@ -42,7 +42,7 @@ class SystemParameters:
         self.α = α
         self.h = h
         self.σp = σp #can be = None for random assignment. Handle NF conversion in pulsars.py
-
+        self.process_noise = process_noise
         self.σm = σm
         self.Npsr = int(Npsr)
 

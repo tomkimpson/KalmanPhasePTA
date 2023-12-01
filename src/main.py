@@ -3,17 +3,17 @@
 
 import logging 
 from system_parameters import SystemParameters
+from pulsars import Pulsars
 
-
+from synthetic_data import SyntheticData
 
 def bilby_inference_run():
-
-
     logger = logging.getLogger().setLevel(logging.INFO)
     
-    #Setup the system, defining all system parameters
-    P   = SystemParameters() 
-    
+    #Setup
+    P   = SystemParameters()    # User-specifed system parameters
+    PTA = Pulsars(P)            # All pulsar-related quantities
+    data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
     
     
