@@ -8,22 +8,8 @@ from gravitational_waves import gw_earth_terms,gw_psr_terms
 
 import logging
 import numpy as np 
-import numba as nb
-
-@nb.jit(nopython=True) #From https://stackoverflow.com/a/58017351
-def block_diag_view_jit(arr, num):
-    rows, cols = arr.shape
-    result = np.zeros((num * rows, num * cols), dtype=arr.dtype)
-    for k in range(num):
-        result[k * rows:(k + 1) * rows, k * cols:(k + 1) * cols] = arr
-    return result
-
-
-
-
-
-
-
+from utils import block_diag_view_jit
+import numpy as np 
 
 class SyntheticData:
     
@@ -34,7 +20,6 @@ class SyntheticData:
 
         #Discrete timesteps
         self.t = pulsars.t
-
 
 
         γ = pulsars.γ[0] #TODO gamma shoud just be a scalar
@@ -74,7 +59,8 @@ class SyntheticData:
         #It is useful to have phi/f separatly:
         self.state_phi = state[:,0::2]
         self.state_f = state[:,1::2]
-        
+
+
         #Todo: unit test for this slicing 
         # print(state_phi[0:5,:]) 
         # print(state_f[0:5,:]) 
@@ -112,3 +98,6 @@ class SyntheticData:
         self.phi_measured_no_noise = self.state_phi - (self.state_f+pulsars.ephemeris)*GW
         measurement_noise = generator.normal(0, pulsars.σm,self.phi_measured_no_noise.shape) # Measurement noise. Seeded
         self.phi_measured = self.phi_measured_no_noise + measurement_noise
+
+
+

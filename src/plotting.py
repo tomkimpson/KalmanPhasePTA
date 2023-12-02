@@ -14,7 +14,7 @@ plt.style.use('science')
 
 
 
-def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1):
+def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1,state_phi_pred=None,state_f_pred=None,phi_measured_pred=None):
 
     #Setup the figure
     h,w = 12,8
@@ -23,6 +23,7 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1):
     fig, axes = plt.subplots(nrows=rows, ncols=cols, figsize=(h,w),sharex=True)
     #Variables to plot
     tplot = t / (365*24*3600)
+    tplot=np.arange(len(t))
     state_phi_i = state_phi[:,psr_index]
     state_f_i   = state_f[:,psr_index]
     phi_measured_i = phi_measured[:,psr_index]
@@ -31,6 +32,16 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1):
     axes[0].plot(tplot,state_phi_i)
     axes[1].plot(tplot,state_f_i)
     axes[2].plot(tplot,phi_measured_i)
+
+    #Plot the predictions too, if you have them
+    if state_phi_pred is not None:
+        axes[0].plot(tplot,state_phi_pred[:,psr_index])
+
+    if state_f_pred is not None:
+        axes[1].plot(tplot,state_f_pred[:,psr_index])
+
+    if phi_measured_pred is not None:
+        axes[2].plot(tplot,phi_measured_pred[:,psr_index])
 
 
     # #Make it pretty
@@ -41,16 +52,12 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1):
     axes[1].set_ylabel(r'$f^*$ [Hz]', fontsize=fs)
     axes[2].set_ylabel(r'$\phi^*_{\rm m}$ [rad]', fontsize=fs)
 
-    # plt.subplots_adjust(hspace=0.0,wspace=0.0)
+    plt.subplots_adjust(hspace=0.0,wspace=0.0)
+    plt.suptitle(f'Synthetic data for PSR index: {psr_index}',fontsize=fs)
 
-    
-
-    # plt.suptitle(f'Synthetic data for PSR index: {psr_index}',fontsize=fs)
-
-    # ax.set_ylabel(r'$\Lambda$', fontsize=fs)
-    
-    # ax.xaxis.set_tick_params(labelsize=fs-4)
-    # ax.yaxis.set_tick_params(labelsize=fs-4)
+    for ax in axes:    
+        ax.xaxis.set_tick_params(labelsize=fs-4)
+        ax.yaxis.set_tick_params(labelsize=fs-4)
 
 
 
