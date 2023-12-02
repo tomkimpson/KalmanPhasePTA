@@ -40,7 +40,7 @@ F matrix
 """
 #@njit(fastmath=True)
 def F_function(γ,dt,Npsr):
-    component_array = np.array([[1,(1-np.exp(-γ*dt)/γ)],
+    component_array = np.array([[1,(1-np.exp(-γ*dt))/γ],
                                 [0,np.exp(-γ*dt)]]) 
 
     return block_diag_view_jit(component_array,Npsr) 

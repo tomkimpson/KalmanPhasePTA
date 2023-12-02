@@ -30,15 +30,20 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1,state_phi_p
 
     #Plot 'em 
     axes[0].plot(tplot,state_phi_i)
+    print("first state phase value = ", state_phi_i[0])
+
     axes[1].plot(tplot,state_f_i)
+    print("first state frequency value = ", state_f_i[0])
     axes[2].plot(tplot,phi_measured_i)
 
     #Plot the predictions too, if you have them
     if state_phi_pred is not None:
         axes[0].plot(tplot,state_phi_pred[:,psr_index])
+        print("first predicted state phase value = ", state_phi_pred[0,psr_index])
 
     if state_f_pred is not None:
         axes[1].plot(tplot,state_f_pred[:,psr_index])
+        print("first predicted state frequency value = ", state_f_pred[0,psr_index])
 
     if phi_measured_pred is not None:
         axes[2].plot(tplot,phi_measured_pred[:,psr_index])

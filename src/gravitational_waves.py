@@ -103,6 +103,7 @@ What is the GW modulation factor, including all pulsar terms?
 def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
     prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
+
     omega_t = -omega*t
     omega_t = omega_t[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
 

@@ -22,6 +22,7 @@ def update(x, P, observation,R,GW,ephemeris):
 
     y_predicted = H@x - GW*ephemeris
 
+
     y    = observation - y_predicted
     S    = H@P@H.T + R 
     Sinv = np.linalg.inv(S)
@@ -34,14 +35,24 @@ def update(x, P, observation,R,GW,ephemeris):
     # P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
     # and works for non-optimal K vs the equation
     # P = (I-KH)P usually seen in the literature.
-    I_KH = 1.0 - K@H
-    Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
-
+    #I_KH = 1.0 - K@H
+    #Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
+    Pnew = (np.eye(2*N) - K@H)@P 
  
+    # print("Update restults:")
+    # print("The input P was ")
+    # print(P)
+    # print("the new P is")
+    # print(Pnew)
+    # print("abd the state is")
+    # print(xnew)
+
+    if np.isnan(xnew[0]):
+        sys.exit()
+
     #Map back from the state to measurement space. We can surface and plot this variable
     ypred = H@xnew - GW*ephemeris
-
-    return xnew, Pnew,likelihood_value,ypred
+    return xnew, Pnew,0.0,ypred
 
 
 """
@@ -49,9 +60,24 @@ Kalman predict step for diagonal matrices where everything is considered as a 1d
 """
 @njit(fastmath=True)
 def predict(x,P,F,Q): 
+
+    # print("Predict input")
+    # print(x)
+    # print(P)
+
+
     xp = F@x
     Pp = F@P@F.T + Q  
 
+    #Pp = np.dot(np.dot(F, P), F.T) + Q
+
+    # print("Fmatrix = ")
+    # print(F)
+    # print(Q)
+
+    # print("Predict output")
+    # print(xp)
+    # print(Pp)
 
     return xp,Pp
 
@@ -165,6 +191,7 @@ class KalmanFilter:
         x=  np.zeros(2*self.Npsr) #guess of intial states. Assume for every pulsar the heterodyned phase/frequency = 0
         P=  np.eye(2*self.Npsr)* sigma_m * 1e10 #Guess that the uncertainty in the initial state is a few orders of magnitude greater than the measurement noise
         #Does it make sense for this to be diagonal? Probably not...?
+        #P=  np.ones((2*self.Npsr,2*self.Npsr)) * sigma_m * 1e6 #Guess that the uncertainty in the initial state is a few orders of magnitude greater than the measurement noise
 
 
 
@@ -200,16 +227,17 @@ class KalmanFilter:
         x_results = np.zeros((self.Nsteps,2*self.Npsr))
         y_results = np.zeros((self.Nsteps,self.Npsr))
 
-        x_results[0,:] = x
-        y_results[0,:] = y_predicted
-       
+        #x_results[0,:] = x
+        #y_results[0,:] = y_predicted 
+        print("first x pred = ", x)
 
 
         for i in np.arange(1,self.Nsteps):
+            #print("Step number ", i)
 
             obs                              = self.observations[i,:]                                     #The observation at this timestep
             x_predict, P_predict             = predict(x,P,F,Q)                                           #The predict step
-            x,P,likelihood_value,y_predicted = update(x,P, self.observations[i,:],R,GW[i,:],self.ephemeris[i,:]) #The update step    
+            x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],R,GW[i,:],self.ephemeris[i,:]) #The update step    
             
             x_results[i,:] = x
             y_results[i,:] = y_predicted
