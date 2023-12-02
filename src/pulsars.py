@@ -47,6 +47,11 @@ class Pulsars:
         self.q         = _unit_vector(np.pi/2.0 -self.δ, self.α) # 3 rows, N columns
 
 
+        #Precompute the q^i q^j terms
+        self.q_products=_precomute_q_terms(self.q)
+
+
+
         #Discrete timesteps
         self.dt      = SystemParameters.cadence * 24*3600 #from days to step_seconds
         end_seconds  = SystemParameters.T* 365*24*3600 #from years to second
@@ -81,84 +86,13 @@ class Pulsars:
         # #the SystemParameters class to the Kalman filter - it should be completely blind
         # #to the true parameters - it only knows what we tell it!
         self.Npsr    = len(self.f) 
-        
-        # 
-        # 
-        # # 
-        # self.ephemeris = self.f + np.outer(self.t,self.fdot) 
-        # self.fprime    = self.f - self.ephemeris[0,:] #this is the scaled state variable at t=0 
-        # print(self.fprime)
+        self.σm =  SystemParameters.σm
+        self.ephemeris = self.f + np.outer(self.t,self.fdot) 
+     
         
         
         
-        
-        
-        
-        
-        # 
 
-
-
-
-
-
-
-
-
-
-
-        # #Rescaling
-        # self.ephemeris = self.f + np.outer(self.t,self.fdot) 
-        # self.fprime    = self.f - self.ephemeris[0,:] #this is the scaled state variable at t=0 
-        
-
-
-
-
-
-
-
-
-
-        # #Create a flattened q-vector for optimised calculations later
-        # self.q_products = np.zeros((len(self.f),9))
-        # k = 0
-        # for n in range(len(self.f)):
-        #     k = 0
-        #     for i in range(3):
-        #         for j in range(3):
-        #             self.q_products[n,k] = self.q[n,i]*self.q[n,j]
-        #             k+=1
-        # self.q_products = self.q_products.T
-
-
-        # #Also define a new variable chi 
-        # m,n                 = principal_axes(np.pi/2.0 - SystemParameters.δ,SystemParameters.α,SystemParameters.ψ)    
-        # gw_direction        = np.cross(m,n)
-        # dot_product         = 1.0 + np.dot(self.q,gw_direction)
-
-        # print("Value of n dot q is")
-        # print(np.dot(self.q,gw_direction))
-
-        # self.chi = np.mod(SystemParameters.Ω*self.d*dot_product,2*np.pi)
-        # print("chi vals are = ", self.chi)
-
-
-
-
-
-        
-        # #if σp is defined then set all pulsars with that value
-        # #else assign randomly within a range 
-        # generator = np.random.default_rng(SystemParameters.sigma_p_seed)
-
-        # self.σm =  SystemParameters.σm
-        # self.NF = NF 
-
-        # #Rescaling
-        # self.ephemeris = self.f + np.outer(self.t,self.fdot) 
-        # self.fprime    = self.f - self.ephemeris[0,:] #this is the scaled state variable at t=0 
-        
 
 """
 Given a latitude theta and a longitude phi, get the xyz unit vector which points in that direction 
@@ -170,16 +104,18 @@ def _unit_vector(theta,phi):
     return np.array([qx, qy, qz]).T
 
 
-def convert_vector_to_ra_dec(v):
+"""Precompute the 9 cross terms i.e. xx,xy,xz,yx,yy,yz,zx,zy,zz.
+"""
+def _precomute_q_terms(q):
 
-    x,y,z = v[0],v[1],v[2]
+    Npsr = q.shape[0]
+    q_products = np.zeros((Npsr,9))
+    k = 0
+    for n in range(Npsr):
+        k = 0
+        for i in range(3):
+            for j in range(3):
+                q_products[n,k] = q[n,i]*q[n,j]
+                k+=1
 
-
-    r = np.sqrt(x**2 + y**2 + z**2)
-
-    theta = np.arccos(z/r)
-    phi = np.arctan2(y,x)
-
-
-
-    return np.pi/2.0 - theta, phi #dec/ra
+    return q_products.T #transpose is used so shape is (9,Npsr)

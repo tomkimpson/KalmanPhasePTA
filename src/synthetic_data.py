@@ -3,7 +3,7 @@
 import sdeint
 # import numpy as np 
 
-# from gravitational_waves import gw_earth_terms,gw_psr_terms
+from gravitational_waves import gw_earth_terms,gw_psr_terms
 
 
 import logging
@@ -33,7 +33,7 @@ class SyntheticData:
 
 
         #Discrete timesteps
-        t = pulsars.t
+        self.t = pulsars.t
 
 
 
@@ -43,6 +43,8 @@ class SyntheticData:
         
 
         #Integrate the 2D vector Ito equation dx = Ax dt + BdW
+        #We assume the state is x = (phi,f).
+        # For e.g. 2 pulsars it is x=(phi_1,f_1,phi_2,f_2) 
         component_array_a = np.array([[0,1],
                                     [0,-γ]]) #See pg2 of O'Leary in docs
 
@@ -53,10 +55,7 @@ class SyntheticData:
 
         A = block_diag_view_jit(component_array_a,pulsars.Npsr) #we need to apply this over N pulsars
         B = block_diag_view_jit(component_array_b,pulsars.Npsr) #we need to apply this over N pulsars
-        x0 = np.zeros((2*pulsars.Npsr)) #initial condition. All initial phases are zero and heterodyned frequencies 
-
-
-
+        x0 = np.zeros((2*pulsars.Npsr)) # Initial condition. All initial phases are zero and heterodyned frequencies 
 
 
         #Random seeding
@@ -70,49 +69,46 @@ class SyntheticData:
         def g(x,t):
             return B
 
-        self.state= sdeint.itoint(f,g,x0, t,generator=generator)
-
-
-        print(self.state)
+        state= sdeint.itoint(f,g,x0, self.t,generator=generator) #This has shape (Ntimes x 2*Npsr)
         
-        # #Turn σp and γ into diagonal matrices that can be accepted by vectorized sdeint
-        # σp = np.diag(σp)
-        # γ = np.diag(γ)
+        #It is useful to have phi/f separatly:
+        self.state_phi = state[:,0::2]
+        self.state_f = state[:,1::2]
+        
+        #Todo: unit test for this slicing 
+        # print(state_phi[0:5,:]) 
+        # print(state_f[0:5,:]) 
+        # print(state[0:5,:])
 
-
-
-        # 
 
         # #Now calculate the modulation factor due to the GW
         
-        # if P.use_psr_terms_in_data:
-        #     GW_function = gw_psr_terms
-        #     logging.info("You are including the PSR terms in your synthetic data generation")
-        # else:
-        #     GW_function = gw_earth_terms
-        #     logging.info("You are using just the Earth terms in your synthetic data generation")
-
-        # X_factor = GW_function(
-        #                                 P.δ,
-        #                                 P.α,
-        #                                 P.ψ,
-        #                                 pulsars.q,
-        #                                 pulsars.q_products,
-        #                                 P.h,
-        #                                 P.ι,
-        #                                 P.Ω,
-        #                                 pulsars.t,
-        #                                 P.Φ0,
-        #                                 pulsars.chi
-        #                                 )
-            
-        
-        # #The measured frequency, no noise
-        # self.f_measured_clean= (1.0-X_factor)*self.intrinsic_frequency - X_factor*pulsars.ephemeris
-        
-        # measurement_noise = generator.normal(0, pulsars.σm,self.f_measured_clean.shape) # Measurement noise. Seeded
-        # self.f_measured = self.f_measured_clean + measurement_noise
+        if P.use_psr_terms_in_data:
+            GW_function = gw_psr_terms
+            logging.info("You are including the PSR terms in your synthetic data generation")
+        else:
+            GW_function = gw_earth_terms
+            logging.info("You are using just the Earth terms in your synthetic data generation")
 
 
-        # #add time as part of the data object
-        # self.t = t
+
+
+        #Now get the heterodyned phi measured at the detector
+        GW = GW_function(
+                                        P.δ,
+                                        P.α,
+                                        P.ψ,
+                                        pulsars.q,
+                                        pulsars.q_products,
+                                        P.h,
+                                        P.ι,
+                                        P.Ω,
+                                        pulsars.t,
+                                        P.Φ0,
+                                        pulsars.d
+                                        )
+ 
+       
+        self.phi_measured_no_noise = self.state_phi - (self.state_f+pulsars.ephemeris)*GW
+        measurement_noise = generator.normal(0, pulsars.σm,self.phi_measured_no_noise.shape) # Measurement noise. Seeded
+        self.phi_measured = self.phi_measured_no_noise + measurement_noise
