@@ -37,6 +37,15 @@ def bilby_inference_run():
 
 
 
+
+
+
+    # t0 = time.time()
+    # model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
+    # t1 = time.time()
+    # print(t1-t0)
+
+
     sys.exit()
     
     #Bilby

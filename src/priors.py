@@ -93,6 +93,27 @@ def _add_to_bibly_priors_dict_uniform(x,label,init_parameters,priors,tol):
 
 
 """
+Add uniform prior vector in the range 0 - 2pi
+"""
+def _add_to_bibly_priors_dict_radians(x,label,init_parameters,priors):
+    
+    i = 0
+    for f in x:
+        key = label+str(i)
+        init_parameters[key] = None
+      
+        priors[key] = bilby.core.prior.Uniform(0.0,2*np.pi, key)
+        
+        i+= 1
+
+    return init_parameters,priors
+
+
+
+
+
+
+"""
 Set a prior on the state parameters
 """
 def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_known):
@@ -101,10 +122,8 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
         logging.info('Setting fully informative priors on PSR parameters')
 
         init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.f,"f0",init_parameters,priors)     
-        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.fdot,"fdot",init_parameters,priors)    
-        #init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.σp,"sigma_p",init_parameters,priors)  
-        #init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.γ,"gamma",init_parameters,priors)           
-        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.d,"distance",init_parameters,priors) 
+        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.fdot,"fdot",init_parameters,priors)           
+        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.χ,"chi",init_parameters,priors) 
 
 
         #For now, just one gamma and sigma p
@@ -120,10 +139,7 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
 
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.f,"f0",init_parameters,priors,tol=1e-10)      #uniform
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.fdot,"fdot",init_parameters,priors,tol=0.01) #uniform
-        #init_parameters,priors = _add_to_bibly_priors_dict_log(PTA.σp,"sigma_p",init_parameters,priors,1e-21,1e-19) #log. 
-        #init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.γ,"gamma",init_parameters,priors)           # constant
-        init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.d,"distance",init_parameters,priors,tol=0.1) 
-
+        init_parameters,priors = _add_to_bibly_priors_dict_radians(PTA.χ,"chi",init_parameters,priors) 
 
 
         #For now, just one gamma and sigma p

@@ -91,7 +91,7 @@ class SyntheticData:
                                         P.Ω,
                                         pulsars.t,
                                         P.Φ0,
-                                        pulsars.d
+                                        pulsars.χ
                                         )
  
        

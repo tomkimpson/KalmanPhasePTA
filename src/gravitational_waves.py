@@ -61,7 +61,7 @@ def _prefactors(delta,alpha,psi,q,q_products,h,iota,omega):
   
     
     prefactor = -H/(2*omega*dot_product)
-    return prefactor,dot_product
+    return prefactor #,dot_product
 
 
 
@@ -71,8 +71,9 @@ def _prefactors(delta,alpha,psi,q,q_products,h,iota,omega):
 What is the GW modulation factor, including all pulsar terms?
 """
 @njit(fastmath=True)
-def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
-    prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
+def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
+    #prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
+    prefactor = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
 
     omega_t = -omega*t
@@ -81,7 +82,7 @@ def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
 
 
     earth_term = np.sin(-omega_t + phi0)
-    pulsar_term = np.sin(-omega_t + phi0+omega*dot_product*d)
+    pulsar_term = np.sin(-omega_t + phi0+χ)
 
 
     return prefactor*(earth_term - pulsar_term)
@@ -91,7 +92,7 @@ def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
 What is the GW modulation factor, neglecting tje pulsar terms?
 """
 @njit(fastmath=True)
-def gw_earth_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
+def gw_earth_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
     prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
     omega_t = -omega*t
@@ -109,7 +110,7 @@ def gw_earth_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
 The null model - i.e. no GW
 """
 #@njit(fastmath=True)
-def null_model(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
+def null_model(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
     return np.zeros((len(t),len(q))) #if there is no GW, the GW factor = 0.0
     
 

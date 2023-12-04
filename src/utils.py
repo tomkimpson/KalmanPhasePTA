@@ -8,3 +8,5 @@ def block_diag_view_jit(arr, num):
     for k in range(num):
         result[k * rows:(k + 1) * rows, k * cols:(k + 1) * cols] = arr
     return result
+
+

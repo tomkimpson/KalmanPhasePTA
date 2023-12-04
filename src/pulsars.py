@@ -3,8 +3,7 @@ from numpy import sin, cos
 import numpy as np 
 import pandas as pd 
 import logging
-#from utils import get_project_root
-#from gravitational_waves import principal_axes
+from gravitational_waves import principal_axes
 
 from pathlib import Path
 import os 
@@ -70,16 +69,15 @@ class Pulsars:
             generator = np.random.default_rng(SystemParameters.seed)
             self.σp   = generator.uniform(low = SystemParameters.σp/10,high=SystemParameters.σp*10,size=self.Npsr)
 
-        #     logging.info("You are assigning the σp terms randomly")
-        # else:
-        #     self.σp = np.full(self.Npsr,SystemParameters.σp)
 
+        #Create a new parameter χ
+        m,n                 = principal_axes(np.pi/2.0 - SystemParameters.δ,SystemParameters.α,SystemParameters.ψ)    
+        gw_direction        = np.cross(m,n)
+        dot_product         = 1.0 + self.q@gw_direction
+        self.χ = np.mod(SystemParameters.Ω*self.d*dot_product,2*np.pi)
+        logging.info(f"The values for χ are as follows: {self.χ}")
 
-
-
-
-
-
+    
 
         # #Assign some other useful quantities to self
         # #Some of these are already defined in SystemParameters, but I don't want to pass

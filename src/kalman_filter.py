@@ -125,7 +125,9 @@ class KalmanFilter:
         self.list_of_f_keys        = [f'f0{i}' for i in range(self.Npsr)]
         self.list_of_fdot_keys     = [f'fdot{i}' for i in range(self.Npsr)]
         self.list_of_gamma_keys    = [f'gamma{i}' for i in range(self.Npsr)]
-        self.list_of_distance_keys = [f'distance{i}' for i in range(self.Npsr)]
+        #self.list_of_distance_keys = [f'distance{i}' for i in range(self.Npsr)]
+        self.list_of_chi_keys = [f'chi{i}' for i in range(self.Npsr)]
+
         self.list_of_sigma_p_keys  = [f'sigma_p{i}' for i in range(self.Npsr)]
         
 
@@ -166,7 +168,7 @@ class KalmanFilter:
         #Now read in the pulsar parameters. Explicit.
         f       = dict_to_array(parameters_dict,self.list_of_f_keys)
         fdot    = dict_to_array(parameters_dict,self.list_of_fdot_keys)
-        d       = dict_to_array(parameters_dict,self.list_of_distance_keys)
+        chi     = dict_to_array(parameters_dict,self.list_of_chi_keys)
   
         #TODO. For now gamma and sigma_p are shared between all pulsars
         gamma = parameters_dict["gamma"].item()
@@ -176,7 +178,7 @@ class KalmanFilter:
         sigma_m = parameters_dict["sigma_m"]#.item() #float, known
 
         return omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-               f,fdot,gamma,d,sigma_p,\
+               f,fdot,gamma,chi,sigma_p,\
                sigma_m
 
 
@@ -187,7 +189,7 @@ class KalmanFilter:
 
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-        f,fdot,gamma,d,sigma_p,\
+        f,fdot,gamma,chi,sigma_p,\
         sigma_m = self.parse_dictionary(parameters) 
         
         #Precompute transition/Q/R Kalman matrices
@@ -212,7 +214,7 @@ class KalmanFilter:
                                    omega_gw,
                                    self.t,
                                    phi0_gw,
-                                   d
+                                   chi
                                 )
 
 
@@ -235,8 +237,6 @@ class KalmanFilter:
         x_results = np.zeros((self.Nsteps,2*self.Npsr))
         y_results = np.zeros((self.Nsteps,self.Npsr))
 
-        #P_results = np.zeros((self.Nsteps,self.Npsr))
-
         
         y_results[0,:] = y_predicted 
         for i in np.arange(1,self.Nsteps):
@@ -244,7 +244,7 @@ class KalmanFilter:
             x_predict, P_predict             = predict(x,P,F,Q)                                           #The predict step
             x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
-            #print(P)
+    
             x_results[i,:] = x
             y_results[i,:] = y_predicted
        
