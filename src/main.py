@@ -32,23 +32,12 @@ def bilby_inference_run():
     #We get the correct parameters via Bilby dictionary, looking towards when we will run this with nested sampling
     init_parameters,optimal_parameters_dict = bilby_priors_dict(PTA,P,set_state_parameters_as_known=True,set_measurement_parameters_as_known=True)
     optimal_parameters = optimal_parameters_dict.sample(1)    
-    #model_likelihood,xresults,yresults = KF.fast_likelihood(optimal_parameters)
-    model_likelihood = KF.fast_likelihood(optimal_parameters)
-
-
-
-
+    model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
     logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
 
 
 
-    t0 = time.time()
-    model_likelihood =  KF.fast_likelihood(optimal_parameters)
-    t1 = time.time()
-    print("Runtime = ", t1-t0)
     sys.exit()
-
-
     
     #Bilby
     init_parameters, priors = bilby_priors_dict(PTA,P)
@@ -64,7 +53,6 @@ def bilby_inference_run():
     arg_name = 'sandbox'
     BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/",npoints=1000)
     logging.info("The run has completed OK")
-
 
 
 
