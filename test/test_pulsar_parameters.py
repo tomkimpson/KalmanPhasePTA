@@ -39,7 +39,6 @@ def test_reasonable_pulsar_values():
 
 
 
-
 def test_unit_vector():
 
     N = 5
