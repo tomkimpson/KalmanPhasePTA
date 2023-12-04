@@ -7,42 +7,30 @@ import sys
 
 from utils import block_diag_view_jit
 
-from scipy.sparse import csr_array
-
-@njit(fastmath=True)
-def get_sparsity(X):
-
-    non_zero = np.count_nonzero(X)
-    total_val = X.shape[0] * X.shape[1]
-    sparsity = (total_val - non_zero) / total_val
-    density = non_zero / total_val
-
-    print(sparsity,density)
-
-
-
+from scipy.sparse import csr_array,csc_array,identity
+from scipy.sparse.linalg import inv as sparse_inv
 
 
 """
 Kalman likelihood
 """
-# @njit(fastmath=True)
-def log_likelihood(y,cov,cov_inv):
+@njit(fastmath=True)
+def log_likelihood(y,cov):
     N = len(y)
-
+    x = y/cov
     #The innovation covariance is diagonal
     #Therefore we can calculate the determinant of its logarithm as below
     #A normal np.linalg.det(cov)fails due to overflow, since we just have
     #det ~ 10^{-13} * 10^{-13} * 10^{-13}*...
     log_det_cov = np.sum(np.log(np.diag(cov))) # Uses log rules and diagonality of covariance matrix
-    ll = -0.5 * (log_det_cov + (y.T)@cov_inv @ y + N*np.log(2*np.pi))
+    ll = -0.5 * (log_det_cov + y@x+ N*np.log(2*np.pi))
     return ll
 
 
 """
 Kalman update step
 """
-# @njit(fastmath=True)
+@njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
 
     #Construct the H matrix. Might be smarter way to do this which avoids the loop. TODO
@@ -54,58 +42,38 @@ def update(x, P, observation,R,GW,ephemeris):
         H[i, 2*i + 1] = -GW[i]
 
 
-    Hsparse = csr_array(H)
-    Psparse = csr_array(P)
-
-    print("sparsity of H = ") 
-    get_sparsity(H)
-
-    print("sparsity of P = ") 
-    get_sparsity(P)
-    print(P)
-
-    y1 = np.dot(Hsparse,x)
-
-
     y_predicted = H@x - GW*ephemeris
-    y    = observation - y_predicted
-    S    = np.diag(H@P@H.T + R) #S is diagonal so just extract the main diagonal
-    S    = H@P@H.T + R #S is diagonal so just extract the main diagonal
+    y           = observation - y_predicted
+    S           = H@P@H.T + R
+    Sinv        = np.linalg.inv(S) #S is diagonal so we can compute the inverse differently here
+    K           = P@H.T@Sinv
+    xnew        = x + K@y
 
-    print(S)
-    #Sinv = 1.0/S
-    Sinv = np.linalg.inv(S) # We claim that S is diagonal when calculating the likelihood so we caan just take the inverse
-    K    = P@H.T@Sinv 
-    xnew = x + K@y
-
-   
 
     #Update the covariance 
     #Following FilterPy https://github.com/rlabbe/filterpy/blob/master/filterpy/kalman/EKF.py by using
-    # P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
-    # and works for non-optimal K vs the equation
+    #P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
+    #and works for non-optimal K vs the equation
     #P = (I-KH)P usually seen in the literature.
     I_KH = np.eye(2*N) - K@H
     Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
     
-
-    #Get the likelihood
-    ll = log_likelihood(y,S,Sinv)
-
+    ll = log_likelihood(y,np.diag(S))
 
     #Map back from the state to measurement space. We can surface and plot this variable
     #ypred = H@xnew - GW*ephemeris
-    return xnew, Pnew,ll,0.0
+    return xnew, Pnew,ll #,0.0
+    #return x, P,0.0,0.0
 
 
 """
 Kalman predict step for diagonal matrices where everything is considered as a 1d vector
 """
-# @njit(fastmath=True)
+@njit(fastmath=True)
 def predict(x,P,F,Q): 
-    xp = F@x
-    Pp = F@P@F.T + Q  
-    return xp,Pp
+    #xp = F@x
+    #Pp = F@P@F.T + Q  
+    return F@x,F@P@F.T + Q 
 
 
 
@@ -164,8 +132,10 @@ class KalmanFilter:
         self.list_of_sigma_p_keys  = [f'sigma_p{i}' for i in range(self.Npsr)]
         
 
+        #some initiaisation
+        self.x0 = np.zeros(2*self.Npsr) #guess of intial states. Assume for every pulsar the heterodyned phase/frequency = 0
 
-
+        self.P0 = np.eye(2*self.Npsr)* 0.0
 
     """
     Bilby provides samples from prior as a dict
@@ -217,8 +187,8 @@ class KalmanFilter:
         Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
      
         #Initialise x and P
-        x=  np.zeros(2*self.Npsr) #guess of intial states. Assume for every pulsar the heterodyned phase/frequency = 0
-        P=  np.eye(2*self.Npsr)* 0.0
+        x= self.x0 
+        P= self.P0
 
         # Precompute the influence of the GW
         # This is solely a function of the parameters and the t-variable but NOT the states
@@ -246,14 +216,16 @@ class KalmanFilter:
        
         # Do the first update step
         x,P,likelihood_value,y_predicted = update(x,P, self.observations[0,:],R,GW[0,:],ephemeris[0,:])
-        ll +=likelihood_value
+        #ll +=likelihood_value
         
 
         for i in np.arange(1,self.Nsteps):
             obs                              = self.observations[i,:]                                     #The observation at this timestep
             x_predict, P_predict             = predict(x,P,F,Q)                                           #The predict step
-            x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],R,GW[i,:],ephemeris[i,:]) #The update step    
-            ll +=likelihood_value
+            #x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],R,GW[i,:],ephemeris[i,:]) #The update step    
+            x,P,likelihood_value,y_predicted = update(x,P, self.observations[i,:],R,GW[i,:],ephemeris[i,:]) #The update step    
+
+            #ll +=likelihood_value
         
         
         

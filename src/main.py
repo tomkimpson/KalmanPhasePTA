@@ -32,11 +32,9 @@ def bilby_inference_run():
     #We get the correct parameters via Bilby dictionary, looking towards when we will run this with nested sampling
     init_parameters,optimal_parameters_dict = bilby_priors_dict(PTA,P,set_state_parameters_as_known=True,set_measurement_parameters_as_known=True)
     optimal_parameters = optimal_parameters_dict.sample(1)    
-    model_likelihood,xresults,yresults = KF.fast_likelihood(optimal_parameters)
+    #model_likelihood,xresults,yresults = KF.fast_likelihood(optimal_parameters)
     model_likelihood = KF.fast_likelihood(optimal_parameters)
 
-
-    sys.exit()
 
 
 
