@@ -38,7 +38,7 @@ def test_reasonable_pulsar_values():
     assert np.all(PTA.α >= 0)
 
 
-
+"""Test that the q-direction unit vector is reasonable"""
 def test_unit_vector():
 
     N = 5
@@ -71,8 +71,30 @@ def test_unit_vector():
     for i in range(len(q)):
         np.testing.assert_almost_equal(np.linalg.norm(q[i]), 1.0)
 
+"""We precompute the q cross terms - lets check these """
+def test_precompute_q_terms():
+
+    P   = system_parameters.SystemParameters() 
+    PTA = pulsars.Pulsars(P)  
+    q = PTA.q
 
 
+    
+    q_products = pulsars._precompute_q_terms(q)
+    for i in range(PTA.Npsr):
+
+        #Diagonals are a nice check
+        qi = q[i]
+        assert q_products[0][i] == qi[0]*qi[0]
+        assert q_products[4][i] == qi[1]*qi[1]
+        assert q_products[8][i] == qi[2]*qi[2]
 
 
+"""We mod the chi w.r.t 2 pi """
+def test_chis():
 
+    P   = system_parameters.SystemParameters() 
+    PTA = pulsars.Pulsars(P)  
+
+    assert np.all(PTA.χ <= 2*np.pi)
+    assert np.all(0.0 <= PTA.χ)

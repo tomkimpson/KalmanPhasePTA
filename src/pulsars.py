@@ -47,7 +47,7 @@ class Pulsars:
 
 
         #Precompute the q^i q^j terms
-        self.q_products=_precomute_q_terms(self.q)
+        self.q_products=_precompute_q_terms(self.q)
 
 
 
@@ -104,7 +104,7 @@ def _unit_vector(theta,phi):
 
 """Precompute the 9 cross terms i.e. xx,xy,xz,yx,yy,yz,zx,zy,zz.
 """
-def _precomute_q_terms(q):
+def _precompute_q_terms(q):
 
     Npsr = q.shape[0]
     q_products = np.zeros((Npsr,9))
