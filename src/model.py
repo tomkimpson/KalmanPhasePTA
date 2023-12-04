@@ -38,7 +38,7 @@ class PhaseModel:
 """
 F matrix 
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def F_function(γ,dt,Npsr):
     component_array = np.array([[1,(1-np.exp(-γ*dt))/γ],
                                 [0,np.exp(-γ*dt)]]) 
@@ -48,7 +48,7 @@ def F_function(γ,dt,Npsr):
 """
 Q matrix
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def Q_function(γ,σp,dt,Npsr):
     #TODO this assumes all psr have same sigma p. This will need updating
     
@@ -69,7 +69,7 @@ def Q_function(γ,σp,dt,Npsr):
 """
 The R matrix as a scalar - same noise covariance for all pulsars
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def R_function(sigma_m,Npsr):
     return np.eye(Npsr)*sigma_m**2
     

@@ -31,8 +31,8 @@ def bilby_priors_dict(PTA,P,set_state_parameters_as_known=False,set_measurement_
     init_parameters["sigma_m"] = None
     priors["sigma_m"] = P.σm
 
-    #return init_parameters,priors
-    return priors
+    return init_parameters,priors
+    
 
 
 
@@ -120,9 +120,20 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
 
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.f,"f0",init_parameters,priors,tol=1e-10)      #uniform
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.fdot,"fdot",init_parameters,priors,tol=0.01) #uniform
-        init_parameters,priors = _add_to_bibly_priors_dict_log(PTA.σp,"sigma_p",init_parameters,priors,1e-21,1e-19) #log. 
-        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.γ,"gamma",init_parameters,priors)           # constant
-        init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.d,"d",init_parameters,priors) 
+        #init_parameters,priors = _add_to_bibly_priors_dict_log(PTA.σp,"sigma_p",init_parameters,priors,1e-21,1e-19) #log. 
+        #init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.γ,"gamma",init_parameters,priors)           # constant
+        init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.d,"distance",init_parameters,priors,tol=0.1) 
+
+
+
+        #For now, just one gamma and sigma p
+        init_parameters["gamma"] = None
+        priors["gamma"] = PTA.γ[0] #fixed at true value. Don't bother trying to infer
+
+        init_parameters["sigma_p"] = None
+        priors["sigma_p"] = bilby.core.prior.LogUniform(PTA.σp[0]/10, PTA.σp[0]*10, 'sigma_p') 
+
+
 
 
     return init_parameters,priors 
@@ -144,7 +155,6 @@ def _set_prior_on_measurement_parameters(init_parameters,priors,P,set_parameters
         #Add all the GW quantities
         init_parameters[f"omega_gw"] = None
         priors[f"omega_gw"] = P.Ω
-        print(P.Ω)
 
         init_parameters[f"phi0_gw"] = None
         priors[f"phi0_gw"] = P.Φ0

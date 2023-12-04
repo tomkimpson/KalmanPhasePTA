@@ -9,7 +9,7 @@ Return the two polarisation tensors e_+, e_x
 Reshapes allow vectorisation and JIT compatability 
 Todo: check performance of explicit JIT loops
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def _polarisation_tensors(m, n):
 
 
@@ -23,9 +23,7 @@ def _polarisation_tensors(m, n):
     return e_plus,e_cross
 
 
-
-
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def principal_axes(theta,phi,psi):
     
     m1 = sin(phi)*cos(psi) - sin(psi)*cos(phi)*cos(theta)
@@ -41,39 +39,15 @@ def principal_axes(theta,phi,psi):
     return m,n
 
 
-
-
-
-
-
-
-
 """
 Get the hplus and hcross amplitudes
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def _h_amplitudes(h,ι): 
     return h*(1.0 + cos(ι)**2),h*(-2.0*cos(ι)) #hplus,hcross
 
 
-
-# """
-# This function is used to add two 2D matrices of different shapes
-# a(K,T)
-# b(K,N) 
-
-# It returns an array of shape (K,T,N)
-# """
-# #@njit
-# def add_matrices(a, b):
-#     K, T, N = a.shape[0], a.shape[1], b.shape[1]
-#     return a.reshape(K,T,1) + b.reshape(K,1,N)
-
-
-
-
-
-
+@njit(fastmath=True)
 def _prefactors(delta,alpha,psi,q,q_products,h,iota,omega):
 
     #Time -independent terms
@@ -93,34 +67,35 @@ def _prefactors(delta,alpha,psi,q,q_products,h,iota,omega):
 
 
 
-
-
-
 """
 What is the GW modulation factor, including all pulsar terms?
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
     prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
 
     omega_t = -omega*t
-    omega_t = omega_t[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
+    #omega_t = omega_t[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
+    omega_t = omega_t.reshape(len(t),1)#[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
 
 
-    earth_term = np.sin(omega_t + phi0)
-    pulsar_term = np.sin(omega_t + phi0+omega*dot_product*d)
+    earth_term = np.sin(-omega_t + phi0)
+    pulsar_term = np.sin(-omega_t + phi0+omega*dot_product*d)
 
 
     return prefactor*(earth_term - pulsar_term)
    
   
-
+"""
+What is the GW modulation factor, neglecting tje pulsar terms?
+"""
+@njit(fastmath=True)
 def gw_earth_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,d):
     prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
     omega_t = -omega*t
-    omega_t = omega_t[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
+    omega_t = omega_t.reshape(len(t),1)#[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
 
     earth_term = np.sin(omega_t + phi0)
 

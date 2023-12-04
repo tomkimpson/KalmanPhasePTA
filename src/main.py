@@ -8,12 +8,16 @@ from synthetic_data import SyntheticData
 from model import PhaseModel
 from kalman_filter import KalmanFilter
 from priors import bilby_priors_dict
+from bilby_wrapper import BilbySampler
+
+import sys 
+import time 
 
 def bilby_inference_run():
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters()    # User-specifed system parameters
+    P   = SystemParameters(seed=1230,Npsr=0,σm=5e-7)    # User-specifed system parameters
     PTA = Pulsars(P)            # All pulsar-related quantities
     data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
@@ -26,33 +30,42 @@ def bilby_inference_run():
 
     #Run the KF with the correct parameters.
     #We get the correct parameters via Bilby dictionary, looking towards when we will run this with nested sampling
-    optimal_parameters = bilby_priors_dict(PTA,P,set_state_parameters_as_known=True,set_measurement_parameters_as_known=True)
-    print("optimal")
-    print(optimal_parameters)
-    print('-----------------')
+    init_parameters,optimal_parameters_dict = bilby_priors_dict(PTA,P,set_state_parameters_as_known=True,set_measurement_parameters_as_known=True)
+    optimal_parameters = optimal_parameters_dict.sample(1)    
+    model_likelihood,xresults,yresults = KF.fast_likelihood(optimal_parameters)
+    model_likelihood = KF.fast_likelihood(optimal_parameters)
+
+
+    sys.exit()
+
+
+
+    logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
+
+
+
+    t0 = time.time()
+    model_likelihood =  KF.fast_likelihood(optimal_parameters)
+    t1 = time.time()
+    print("Runtime = ", t1-t0)
+    sys.exit()
+
+
     
-    
-    
-    
-    
-    model_likelihood = KF.likelihood(optimal_parameters)
-    
-    
-    # logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
-    
-    # #Bilby
-    # init_parameters, priors = bilby_priors_dict(PTA,P)
+    #Bilby
+    init_parameters, priors = bilby_priors_dict(PTA,P)
    
 
-    # logging.info("Testing KF using parameters sampled from prior")
-    # params = priors.sample(1)
-    # model_likelihood = KF.likelihood(params)
-    # logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
+    logging.info("Testing KF using parameters sampled from prior")
+    params = priors.sample(1)
+    model_likelihood,xresults,yresults = KF.likelihood(params)
+    logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
 
     
-    # # #Now run the Bilby sampler
-    # BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/")
-    # logging.info("The run has completed OK")
+    #Now run the Bilby sampler
+    arg_name = 'sandbox'
+    BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/",npoints=1000)
+    logging.info("The run has completed OK")
 
 
 
