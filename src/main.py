@@ -35,18 +35,6 @@ def bilby_inference_run():
     model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
     logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
 
-
-
-
-
-
-    # t0 = time.time()
-    # model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
-    # t1 = time.time()
-    # print(t1-t0)
-
-
-    sys.exit()
     
     #Bilby
     init_parameters, priors = bilby_priors_dict(PTA,P)
