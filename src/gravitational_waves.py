@@ -18,7 +18,7 @@ def _polarisation_tensors(m, n):
     # Note these are 1D arrays, rather than the usual 2D struture
     #todo: check these for speed up
     e_plus              = np.array([m[i]*m[j]-n[i]*n[j] for i in range(3) for j in range(3)]) 
-    e_cross             = np.array([m[i]*n[j]-n[i]*m[j] for i in range(3) for j in range(3)])
+    e_cross             = np.array([m[i]*n[j]+n[i]*m[j] for i in range(3) for j in range(3)])
 
     return e_plus,e_cross
 
@@ -72,13 +72,11 @@ What is the GW modulation factor, including all pulsar terms?
 """
 @njit(fastmath=True)
 def gw_psr_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
-    #prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
     prefactor = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
 
     omega_t = -omega*t
-    #omega_t = omega_t[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
-    omega_t = omega_t.reshape(len(t),1)#[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
+    omega_t = omega_t.reshape(len(t),1) #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
 
 
     earth_term = np.sin(-omega_t + phi0)
@@ -93,23 +91,20 @@ What is the GW modulation factor, neglecting tje pulsar terms?
 """
 @njit(fastmath=True)
 def gw_earth_terms(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
-    prefactor,dot_product = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
+    prefactor = _prefactors(delta,alpha,psi,q,q_products,h,iota,omega)
 
     omega_t = -omega*t
-    omega_t = omega_t.reshape(len(t),1)#[:,None] #Reshape to (T,1) to allow broadcasting. #todo, setup everything as 2d automatically
+    omega_t = omega_t.reshape(len(t),1)
 
     earth_term = np.sin(omega_t + phi0)
 
-
     return prefactor*(earth_term)
-
-
 
 
 """
 The null model - i.e. no GW
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def null_model(delta,alpha,psi,q,q_products,h,iota,omega,t,phi0,χ):
     return np.zeros((len(t),len(q))) #if there is no GW, the GW factor = 0.0
     

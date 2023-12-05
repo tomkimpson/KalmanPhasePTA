@@ -22,11 +22,10 @@ class SyntheticData:
         self.t = pulsars.t
 
 
-        γ = pulsars.γ[0] #TODO gamma shoud just be a scalar
+        γ = pulsars.γ[0] #TODO gamma should just be a scalar
         σp= pulsars.σp[0] #todo this should NOT be a scalar, but a different value for every pulsar. Need to construct array differently 
 
         
-
         #Integrate the 2D vector Ito equation dx = Ax dt + BdW
         #We assume the state is x = (phi,f).
         # For e.g. 2 pulsars it is x=(phi_1,f_1,phi_2,f_2) 
@@ -61,14 +60,7 @@ class SyntheticData:
         self.state_f = state[:,1::2]
 
 
-        #Todo: unit test for this slicing 
-        # print(state_phi[0:5,:]) 
-        # print(state_f[0:5,:]) 
-        # print(state[0:5,:])
-
-
-        # #Now calculate the modulation factor due to the GW
-        
+        # #Now calculate the modulation factor due to the GW        
         if P.use_psr_terms_in_data:
             GW_function = gw_psr_terms
             logging.info("You are including the PSR terms in your synthetic data generation")

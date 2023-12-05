@@ -27,7 +27,8 @@ class SystemParameters:
                  use_psr_terms_in_data=True, # when generating the synthetic data, include pulsar terms?
                  measurement_model='pulsar', # what do you want the KF measurement model to be? One of pulsar, earth,null
                  seed = 1234,                # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
-                 σp = 1e-20                  # only used if process_noise != True. Assign the process noise s.d. = σp for all pulsars if "Fixed". Assign randomly within U(σp/10,σp*10) if random. 
+                 σp = 1e-20,                  # only used if process_noise != True. Assign the process noise s.d. = σp for all pulsars if "Fixed". Assign randomly within U(σp/10,σp*10) if random. 
+                 γ  = 1e-13                  # Mean reversion. The same for every pulsar 
                  ): 
 
         logging.info("Welcome to the Kalman Filter Nested Sampler for PTA GW systems")
@@ -49,7 +50,7 @@ class SystemParameters:
         self.use_psr_terms_in_data = use_psr_terms_in_data 
         self.measurement_model = measurement_model
         self.seed = seed
-
+        self.γ = γ
         logging.info(f"Random seed is {self.seed}")
 
 
