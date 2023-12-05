@@ -35,9 +35,6 @@ class PhaseModel:
 
 
 
-
-
-
 #These functions have to be outside the class to enable JIT compilation
 #Bit ugly, but works from a performance standpoint
 #Functions are as defined in docs/notes/TomModel_Scaled
