@@ -61,14 +61,7 @@ class SyntheticData:
         self.state_f = state[:,1::2]
 
 
-        #Todo: unit test for this slicing 
-        # print(state_phi[0:5,:]) 
-        # print(state_f[0:5,:]) 
-        # print(state[0:5,:])
-
-
-        # #Now calculate the modulation factor due to the GW
-        
+        # #Now calculate the modulation factor due to the GW        
         if P.use_psr_terms_in_data:
             GW_function = gw_psr_terms
             logging.info("You are including the PSR terms in your synthetic data generation")
