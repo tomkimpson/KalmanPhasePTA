@@ -13,7 +13,11 @@ from bilby_wrapper import BilbySampler
 import sys 
 import time 
 
-def bilby_inference_run():
+
+
+
+
+def bilby_inference_run(arg_name):
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
@@ -47,16 +51,15 @@ def bilby_inference_run():
 
     
     #Now run the Bilby sampler
-    arg_name = 'sandbox'
     BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/",npoints=1000)
     logging.info("The run has completed OK")
 
 
 
 
-
+arg_name = sys.argv[1]           # reference name
 if __name__=="__main__":
-    bilby_inference_run()
+    bilby_inference_run(arg_name)
 
 
 
