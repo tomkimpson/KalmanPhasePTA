@@ -37,7 +37,7 @@ class Pulsars:
         self.f         = pulsars["F0"].to_numpy()            # Hz
         self.fdot      = pulsars["F1"] .to_numpy()           # s^-2
         self.d         = pulsars["DIST"].to_numpy()*1e3*pc/c # this is in units of s^-1
-        self.γ         = np.ones_like(self.f) * 1e-13       # for every pulsar let γ be 1e-13. Hardcoded value, i.e. not a variable in SystemParameters
+        self.γ         = np.ones_like(self.f) * SystemParameters.γ       # for every pulsar let γ be 1e-13. Hardcoded value, i.e. not a variable in SystemParameters
         self.δ         = pulsars["DECJD"].to_numpy()                 # radians
         self.α         = pulsars["RAJD"].to_numpy()                  # radians
 

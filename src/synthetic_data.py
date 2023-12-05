@@ -22,11 +22,10 @@ class SyntheticData:
         self.t = pulsars.t
 
 
-        γ = pulsars.γ[0] #TODO gamma shoud just be a scalar
+        γ = pulsars.γ[0] #TODO gamma should just be a scalar
         σp= pulsars.σp[0] #todo this should NOT be a scalar, but a different value for every pulsar. Need to construct array differently 
 
         
-
         #Integrate the 2D vector Ito equation dx = Ax dt + BdW
         #We assume the state is x = (phi,f).
         # For e.g. 2 pulsars it is x=(phi_1,f_1,phi_2,f_2) 

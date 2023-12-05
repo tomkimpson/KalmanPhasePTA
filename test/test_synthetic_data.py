@@ -33,7 +33,7 @@ def test_seeding():
 """If no GW, the noiseless measured phi and the state_phi should be the same"""
 def test_no_GW():
 
-     # Seed 1
+   
     P   = system_parameters.SystemParameters(h=0.0)    # User-specifed system parameters
     PTA = pulsars.Pulsars(P)            # All pulsar-related quantities
     data = synthetic_data.SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
@@ -42,3 +42,17 @@ def test_no_GW():
 
     #but the measured phi is differnt due to noise
     assert np.all(data.phi_measured != data.state_phi)
+
+
+"""If gamma = 0 and sigma=0, f should be unchanged """
+def test_no_f():
+    P   = system_parameters.SystemParameters(σp=0,γ=0.0)    # User-specifed system parameters
+    PTA = pulsars.Pulsars(P)            # All pulsar-related quantities
+    data = synthetic_data.SyntheticData(PTA,P) #
+
+
+    for i in range(PTA.Npsr):
+        assert data.state_f[i,0] == data.state_f[i,-1] #for the ith pulsar, check the initial state is the same as the final state
+
+
+
