@@ -12,7 +12,7 @@ def test_shapes_of_update_matrices():
         P   = system_parameters.SystemParameters(Npsr=Npsr)    # User-specifed system parameters
         PTA = pulsars.Pulsars(P)
         
-        #state_space_model = model.PhaseModel(P)
+     
 
         
         F = model.F_function(P.γ, PTA.dt,PTA.Npsr)
