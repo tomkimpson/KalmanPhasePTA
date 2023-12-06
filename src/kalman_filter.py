@@ -10,11 +10,11 @@ from utils import block_diag_view_jit
 from scipy.sparse import csr_array,csc_array,identity
 from scipy.sparse.linalg import inv as sparse_inv
 
-
+import scipy
 """
 Kalman likelihood
 """
-@njit(fastmath=True)
+#@njit(fastmath=True)
 def log_likelihood(y,cov):
     N = len(y)
     x = y/cov
@@ -30,7 +30,7 @@ def log_likelihood(y,cov):
 """
 Kalman update step
 """
-@njit(fastmath=True)
+#@njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
 
     #Construct the H matrix. Might be smarter way to do this which avoids the loop. TODO
@@ -41,12 +41,37 @@ def update(x, P, observation,R,GW,ephemeris):
         H[i, 2*i] = 1
         H[i, 2*i + 1] = -GW[i]
 
-
+    
     y_predicted = H@x - GW*ephemeris
     y           = observation - y_predicted
-    S           = H@P@H.T + R
-    Sinv        = np.linalg.inv(S) #S is diagonal so we can compute the inverse differently here
-    K           = P@H.T@Sinv
+    
+    
+    S = scipy.linalg.eigvalsh(P)[N:] + R #vodoo. needs explaining
+    
+    
+    #blob = H@P@H.T
+    #print("blob", np.array_equal(blob, np.diag(np.diag(blob))))
+    
+    #blob2 
+    # print(len(blob2))
+    # C = blob2[len(blob2)//2:]
+    # print(blob)
+    # print('--')
+    # #print(blob2)
+    # print(C)
+
+    # assert np.array_equal(C,np.diag(blob))
+
+    #S           = H@P@H.T + R
+
+    #print("S", np.array_equal(S, np.diag(np.diag(S))))
+    #print("H", np.array_equal(H, np.diag(np.diag(H))))
+    #print("P", np.array_equal(P, np.diag(np.diag(P))))
+    #Sinv        = np.linalg.inv(S) #S is diagonal so we can compute the inverse differently here
+    
+    #K           = P@H.T@Sinv
+    K = np.divide(P@H.T,S)
+    print(K)
     xnew        = x + K@y
 
 
@@ -55,8 +80,11 @@ def update(x, P, observation,R,GW,ephemeris):
     #P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
     #and works for non-optimal K vs the equation
     #P = (I-KH)P usually seen in the literature.
-    I_KH = np.eye(2*N) - K@H
-    Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
+    
+    #I_KH = np.eye(2*N) - K@H
+    #Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
+
+    Pnew = (np.eye(2*N) - K@H) @ P
     
     ll = log_likelihood(y,np.diag(S))
 

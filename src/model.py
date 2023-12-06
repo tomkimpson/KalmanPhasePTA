@@ -74,5 +74,5 @@ The R matrix as a scalar - same noise covariance for all pulsars
 """
 @njit(fastmath=True)
 def R_function(sigma_m,Npsr):
-    return np.eye(Npsr)*sigma_m**2
+    return sigma_m**2
     
