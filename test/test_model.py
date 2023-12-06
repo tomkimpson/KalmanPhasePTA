@@ -11,35 +11,40 @@ def test_shapes_of_update_matrices():
 
         P   = system_parameters.SystemParameters(Npsr=Npsr)    # User-specifed system parameters
         PTA = pulsars.Pulsars(P)
-        
+        phase_model = model.PhaseModel(P,PTA)
      
-
-        
-        F = model.F_function(P.γ, PTA.dt,PTA.Npsr)
-        Q = model.Q_function(P.γ,P.σp,PTA.dt,PTA.Npsr)
-        R = model.R_function(P.σm,PTA.Npsr)
-
+        F,Q = phase_model.kalman_machinery()
+             
 
         assert F.shape == (2*PTA.Npsr, 2*PTA.Npsr) 
         assert Q.shape == F.shape
-        assert R.shape == (PTA.Npsr, PTA.Npsr) 
+
 
 
 """Check the matrices reduced to what we expect in the zero case"""
 def test_zero_values():
 
-    Npsr = 10
-    F = model.F_function(1e-13, 0.0,Npsr)
-    assert np.all(F == np.eye(2*Npsr)) #when dt is zero, F is just an identity matrix
+
+        #Check F becomes and identity matrix
+        P   = system_parameters.SystemParameters()    # User-specifed system parameters
+        PTA = pulsars.Pulsars(P)
+        PTA.dt = 0.0 #modify dt to check outputs
+        phase_model = model.PhaseModel(P,PTA)
+        F,Q = phase_model.kalman_machinery()
+
+        assert np.all(F == np.eye(2*PTA.Npsr)) #when dt is zero, F is just an identity matrix
 
 
-    Q = model.Q_function(1e-13,1e-3,0.0,Npsr)
-    assert np.all(Q == np.zeros(2*Npsr)) #when sigma_p is zero, Q is all zeros
+        #Check Q is NOT zeros for σp = 0
+        #This is because Q is defined a priori and does not depend on parameters to be inferred 
+        #In kalman_filter Q is updated with σp^2
+        P   = system_parameters.SystemParameters(σp=0.0)    # User-specifed system parameters
+        PTA = pulsars.Pulsars(P)
+        phase_model = model.PhaseModel(P,PTA)
+        F,Q = phase_model.kalman_machinery()
 
+        assert ~np.all(Q == np.zeros(2*PTA.Npsr)) #Q should not be a zeros array, but have non zero cpts
 
-
-    R = model.R_function(0.0,Npsr)
-    assert np.all(R == np.zeros(Npsr)) #when dt is zero, F is just an identity matrix
 
 
 

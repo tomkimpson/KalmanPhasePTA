@@ -187,14 +187,17 @@ def test_psr_term():
 """Check that the correct function is used c.f. specified measurement model"""
 def test_call_correct_function():
 
-    P   = system_parameters.SystemParameters()  
-    state_space_model = model.PhaseModel(P)
+    P   = system_parameters.SystemParameters() 
+    PTA = pulsars.Pulsars(P)         
+    state_space_model = model.PhaseModel(P,PTA)
     assert state_space_model.H_function.__name__ == "gw_psr_terms"
 
     P   = system_parameters.SystemParameters(measurement_model="earth")  
-    state_space_model = model.PhaseModel(P)
+    PTA = pulsars.Pulsars(P)         
+    state_space_model = model.PhaseModel(P,PTA)
     assert state_space_model.H_function.__name__ == "gw_earth_terms"
 
     P   = system_parameters.SystemParameters(measurement_model="null")  
-    state_space_model = model.PhaseModel(P)
+    PTA = pulsars.Pulsars(P)         
+    state_space_model = model.PhaseModel(P,PTA)
     assert state_space_model.H_function.__name__ == "null_model"

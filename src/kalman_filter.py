@@ -1,14 +1,11 @@
 import numpy as np 
 from numba import njit
-from model import F_function,R_function,Q_function # H function is defined via a class init. #todo change this! we want things defined in a class that is read by KalmanFilter
+#from model import R_function # H function is defined via a class init. #todo change this! we want things defined in a class that is read by KalmanFilter
 
-from scipy.stats import multivariate_normal
-import sys
 
-from utils import block_diag_view_jit
+#import sys
 
-from scipy.sparse import csr_array,csc_array,identity
-from scipy.sparse.linalg import inv as sparse_inv
+
 
 
 """
@@ -27,52 +24,45 @@ def log_likelihood(y,cov):
     return ll
 
 
+@njit(fastmath=True)
+def construct_H_matrix(some_vector):
+   
+    n = len(some_vector)
+    
+    some_matrix = np.zeros(2 * n**2)
+    step = 2 * (n + 1)
+    some_matrix[::step] = 1
+    some_matrix[1::step] = some_vector
+    some_matrix = some_matrix.reshape(n, 2*n)
+
+    return some_matrix
+
+
+
 """
 Kalman update step
 """
-@njit(fastmath=True)
+#@njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
-
-    #Construct the H matrix. Might be smarter way to do this which avoids the loop. TODO
-    N = int(len(x)/2)
-    H = np.zeros((N, 2*N))
-
-    for i in range(N):
-        H[i, 2*i] = 1
-        H[i, 2*i + 1] = -GW[i]
-
-
-    y_predicted = H@x - GW*ephemeris
-    y           = observation - y_predicted
-    S           = H@P@H.T + R
-    Sinv        = np.linalg.inv(S) #S is diagonal so we can compute the inverse differently here
-    K           = P@H.T@Sinv
-    xnew        = x + K@y
-
-
-    #Update the covariance 
-    #Following FilterPy https://github.com/rlabbe/filterpy/blob/master/filterpy/kalman/EKF.py by using
-    #P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
-    #and works for non-optimal K vs the equation
-    #P = (I-KH)P usually seen in the literature.
-    I_KH = np.eye(2*N) - K@H
-    Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
     
-    ll = log_likelihood(y,np.diag(S))
-
-    #Map back from the state to measurement space. We can surface and plot this variable
-    ypred = H@xnew - GW*ephemeris
-    return xnew, Pnew,ll, ypred
+    H           = construct_H_matrix(GW)    #Determine the H matrix for this step
+    y_predicted = H@x - GW*ephemeris        #The predicted y
+    y           = observation - y_predicted #The residual w.r.t actual data
+    HP          = H@P                       #Precompute H@P as a variable since we use it twice. Probably offers no real performance gain...
+    S           = np.diag(HP@H.T) + R       #S is diagonal
+    K           = np.divide(P@H.T,S)        #making use of diagonality of S
+    xnew        = x + K@y                   #update x
+    Pnew        =  P - K@HP                 #update P, using earlier defined HP
+    ll          = log_likelihood(y,S)       #and get the likelihood
+    
+    return xnew, Pnew,ll
     
 """
-Kalman predict step for diagonal matrices where everything is considered as a 1d vector
+Kalman predict step
 """
 @njit(fastmath=True)
-def predict(x,P,F,Q): 
-    xp = F@x
-    Pp = F@P@F.T + Q  
-    return xp,Pp
-
+def predict(x,P,F,F_transpose,Q): 
+    return F@x,F@P@F_transpose + Q  
 
 
 """
@@ -81,7 +71,6 @@ Given a Bilby dict, make it a numpy array
 def dict_to_array(some_dict,target_keys):
     selected_dict = {k:some_dict[k] for k in target_keys}
     return np.array(list(selected_dict.values())).flatten()
-
 
 
 class KalmanFilter:
@@ -148,6 +137,22 @@ class KalmanFilter:
 
         #self.P0 = block_diag_view_jit(component_array,self.Npsr) #we need to apply this over N pulsars
 
+        #self.R = R_function(PTA.σm,self.Npsr)
+        self.R = PTA.σm**2
+        self.F,self.Q = Model.kalman_machinery()
+
+        #We can also precompute the transpose of F
+        self.F_transpose = self.F.T
+
+
+        #Initialise Kalman machinery
+
+
+
+
+
+
+
     """
     Bilby provides samples from prior as a dict
     Read these into variables.
@@ -171,15 +176,15 @@ class KalmanFilter:
         chi     = dict_to_array(parameters_dict,self.list_of_chi_keys)
   
         #TODO. For now gamma and sigma_p are shared between all pulsars
-        gamma = parameters_dict["gamma"].item()
+        #gamma = parameters_dict["gamma"].item()
         sigma_p = parameters_dict["sigma_p"].item()
 
         #Other noise parameters
-        sigma_m = parameters_dict["sigma_m"]#.item() #float, known
+        #sigma_m = parameters_dict["sigma_m"]#.item() #float, known
 
         return omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-               f,fdot,gamma,chi,sigma_p,\
-               sigma_m
+               f,fdot,chi,sigma_p#,\
+              # sigma_m
 
 
 
@@ -189,14 +194,16 @@ class KalmanFilter:
 
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-        f,fdot,gamma,chi,sigma_p,\
-        sigma_m = self.parse_dictionary(parameters) 
+        f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
         
         #Precompute transition/Q/R Kalman matrices
         #F,Q,R are time-independent functions of the parameters
-        F = F_function(gamma,self.dt,self.Npsr)
-        R = R_function(sigma_m,self.Npsr)
-        Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
+        #F = F_function(gamma,self.dt,self.Npsr)
+        #R = R_function(sigma_m,self.Npsr)
+        #Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
+        F = self.F 
+        F_transpose = self.F_transpose
+        Q = self.Q * sigma_p**2
      
         #Initialise x and P
         x = self.x0 
@@ -216,7 +223,8 @@ class KalmanFilter:
                                    phi0_gw,
                                    chi
                                 )
-
+        #H = compute_total_H_matrix(GW)
+        #H=1.0
 
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
@@ -227,7 +235,69 @@ class KalmanFilter:
               
        
         #Do the first update step
-        x,P,likelihood_value,y_predicted = update(x,P, self.observations[0,:],R,GW[0,:],ephemeris[0,:])
+        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        ll +=likelihood_value
+
+        
+        #y_results[0,:] = y_predicted 
+        for i in np.arange(1,self.Nsteps):
+            obs                              = self.observations[i,:]                                     #The observation at this timestep
+            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
+            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[0,:],ephemeris[i,:]) #The update step    
+            ll +=likelihood_value
+
+         
+        return ll
+
+
+
+
+    #todo
+    def likelihood_slow(self,parameters):
+
+        #Map from the dictionary into variables and arrays
+        omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
+        f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
+        
+        #Precompute transition/Q/R Kalman matrices
+        #F,Q,R are time-independent functions of the parameters
+        #F = F_function(gamma,self.dt,self.Npsr)
+        #R = R_function(sigma_m,self.Npsr)
+        #Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
+        F = self.F 
+        Q = self.Q * sigma_p**2
+     
+        #Initialise x and P
+        x = self.x0 
+        P = self.P0
+
+        # Precompute the influence of the GW
+        # This is solely a function of the parameters and the t-variable but NOT the states
+        GW = self.H_function(delta_gw,
+                                   alpha_gw,
+                                   psi_gw,
+                                   self.q,
+                                   self.q_products,
+                                   h,
+                                   iota_gw,
+                                   omega_gw,
+                                   self.t,
+                                   phi0_gw,
+                                   chi
+                                )
+        #H = compute_total_H_matrix(GW)
+        #H=1.0
+
+        #Define an ephemeris correction
+        ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
+        
+        
+        #Initialise the likelihood
+        ll = 0.0
+              
+       
+        #Do the first update step
+        x,P,likelihood_value,y_predicted = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
 
 
@@ -242,7 +312,7 @@ class KalmanFilter:
         for i in np.arange(1,self.Nsteps):
             obs                              = self.observations[i,:]                                     #The observation at this timestep
             x_predict, P_predict             = predict(x,P,F,Q)                                           #The predict step
-            x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],R,GW[i,:],ephemeris[i,:]) #The update step    
+            x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],self.R,GW[0,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
     
             x_results[i,:] = x
@@ -253,6 +323,8 @@ class KalmanFilter:
 
 
 
+        
+        
         
         
 
