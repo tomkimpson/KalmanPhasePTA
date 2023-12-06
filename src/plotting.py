@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import json
 import pandas as pd 
-#import corner
+import corner
 import scienceplots # noqa: F401
 #from scipy import interpolate
 import warnings
@@ -67,180 +67,82 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1,state_phi_p
 
 
 
-# def plot_statespace(t,states,measurements,psr_index):
 
 
-#     tplot = t / (365*24*3600)
-#     state_i = states[:,psr_index]
-#     measurement_i = measurements[:,psr_index]
-
-#     print(len(tplot))
-#     print(state_i.shape)
-#     print(measurement_i.shape)
-
-#     h,w = 12,8
-#     rows = 2
-#     cols = 1
-#     fig, (ax1,ax2) = plt.subplots(nrows=rows, ncols=cols, figsize=(h,w),sharex=True)
-
-#     ax1.plot(tplot,state_i)
-#     ax2.plot(tplot,measurement_i)
-#     plt.show()
+def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,labels=None, variables_to_plot=None):
 
 
+        print(f"Loading results from {path}")
+        # Load the json results file
+        f = open(path)
+        data = json.load(f)
+        df_posterior = pd.DataFrame(data["posterior"]["content"]) # posterior
+        evidence = data["log_evidence"]
+        f.close()
+
+        #Set-up defaults
+        if injection_parameters is None:
+            injection_parameters = injection_parameters = [5e-7,0.20,2.50,1.0,1.0,1.0,5e-15]
+        if ranges is None:
+            ranges=[(4.95e-7,5.05e-7),(-0.2,1.0),(2.0,3.0),(-0.2,np.pi/2),(0.5,1.5),(0.5,1.5),(0.5*5e-15,1.5*5e-15)]
+        if labels is None:
+            labels = [r'$\Omega$',r'$\Phi_0$',r'$\psi$',r'$\iota$', r'$\delta$',r'$\alpha$',r'$h_{0, \times 10}$']
+        if variables_to_plot is None:
+            variables_to_plot = ["omega_gw","phi0_gw","psi_gw","iota_gw","delta_gw","alpha_gw", "h"]
 
 
+        #Create a numpy array of the variables you want to plot
+        y_post = df_posterior[variables_to_plot].to_numpy()
 
-# def plot_observations(data,xp=None,yp=None,psr_index=1):
-
-#     plt.style.use('science')
-
-#     tplot = data.t / (365*24*3600)
-
-
-#     states = data.intrinsic_frequency
-#     measurements = data.f_measured
-
-
-#     state_i = states[:,psr_index]
-#     measurement_i = measurements[:,psr_index]
-
-
-#     h,w = 12,8
-#     rows = 2
-#     cols = 1
-#     fig, (ax1,ax2) = plt.subplots(nrows=rows, ncols=cols, figsize=(h,w),sharex=False)
-
-#     ax1.plot(tplot,state_i,label='state')
-#     ax2.plot(tplot,measurement_i,label="measurement")
-
-
-#     if xp is not None:
-#         predicted_state = xp[:,psr_index]
-#         ax1.plot(tplot,predicted_state,label='state')
-
-
-
-
-#     if yp is not None:
-#         predicted_state = yp[:,psr_index]
-#         ax2.plot(tplot,predicted_state,label='state')
-
-
-
-#     plt.show()
-
-
-
-# def plot_all(t,states,measurements,measurements_clean,predictions_x,predictions_y,psr_index,savefig=None):
-
-#     plt.style.use('science')
-
-#     tplot = t / (365*24*3600)
-#     state_i = states[:,psr_index]
-#     measurement_i = measurements[:,psr_index]
-#     measurement_clean_i = measurements_clean[:,psr_index]
-
-
-
-#     h,w = 12,8
-#     rows = 4
-#     cols = 1
-#     fig, (ax1,ax2,ax3,ax4) = plt.subplots(nrows=rows, ncols=cols, figsize=(h,w),sharex=False)
-
-#     ax1.plot(tplot,state_i,label='state')
-
-#     #try:
-
-#     #prediction_i = predictions_x[:,psr_index]
-#     #ax1.plot(tplot,prediction_i,label = 'prediction')
-#     #except:
-#      #   print("Failed to plot the predictions for psr index ", psr_index)
     
-#     ax2.plot(tplot,measurement_i,label="measurement",c="C3")
-#     ax2.plot(tplot,measurement_clean_i,label="measurement_clean",c="C5")
+        #Now plot it using corner.corner
+        fs = 20
+        fig = corner.corner(y_post, 
+                            color='C0',
+                            show_titles=True,
+                            smooth=True,smooth1d=True,
+                            truth_color='C2',
+                            quantiles=[0.16, 0.84], #[0.16, 0.84]
+                            truths = injection_parameters,
+                            range=ranges,
+                            labels = labels,
+                            label_kwargs=dict(fontsize=fs))
+        print(f"Model evidence is {evidence}")
+        print(f"The number of samples is {len(df_posterior)}")
+            
+
+        #Pretty-ify
+        for ax in fig.axes:
+
+            if ax.lines: #is anything plotted on this axis?
+            
+                ax.yaxis.set_major_locator(plt.MaxNLocator(3))
+                ax.xaxis.set_major_locator(plt.MaxNLocator(3))
+
+                ax.yaxis.set_tick_params(labelsize=fs-6)
+                ax.xaxis.set_tick_params(labelsize=fs-6)
 
 
-#    # try:
-#     prediction_i_y = predictions_y[:,psr_index]
-#     ax2.plot(tplot,prediction_i_y,label="prediction",c="C4")
-
-#     #Residuals
-#     residuals = prediction_i_y-measurement_i
-
-
-
-#     ax3.plot(tplot,residuals)
-
-#     print("Mean abs residual:", np.mean(np.abs(residuals)))
-#     ax4.hist(residuals,bins=50)
-
- 
-
-#     ax1.legend()
-#     ax2.legend()
-
-
-#     fs=18
-#     ax2.set_xlabel('t [years]', fontsize=fs)
-#     ax1.set_ylabel(r'$f_p$ [Hz]', fontsize=fs)
-#     ax2.set_ylabel(r'$f_M$ [Hz]', fontsize=fs)
-#     ax3.set_ylabel(r'Residual [Hz]', fontsize=fs)
-#     ax2.xaxis.set_tick_params(labelsize=fs-4)
-#     ax2.yaxis.set_tick_params(labelsize=fs-4)
-#     ax1.yaxis.set_tick_params(labelsize=fs-4)
-
-#     plt.subplots_adjust(wspace=0.1, hspace=0.1)
+                ax.title.set_size(18)
+       
 
 
 #     if savefig is not None:
 #         plt.savefig(f"../data/images/{savefig}.png", bbox_inches="tight",dpi=300)
-   
-
-#     plt.show()
-    
-# def _extract_posterior_results(path,variables_to_plot,injection_parameters,ranges,scalings=[1.0,1.0]):
-
-#     print("Extracting data from file: ", path)
-
-#     if path.split('.')[-1] == 'json': #If it is a json files
-
-#         # Opening JSON file
-#         f = open(path)
-
-#         # returns JSON object as 
-#         # a dictionary
-#         data = json.load(f)
-#         print("The evidence is:", data["log_evidence"])
-#         f.close()
-#         #Make it a dataframe. Nice for surfacing
-#         df_posterior = pd.DataFrame(data["posterior"]["content"]) # posterior
-#     else: #is a parquet gzip
-#         df_posterior = pd.read_parquet(path) 
-
         
 
-  
-
-#     #get the model evidence
-#     model_evidence = data['log_evidence']
-
-#     print("The number of samples is:", len(df_posterior))
 
 
-#     print("Variable/Injection/Median")
-#     medians = df_posterior[variables_to_plot].median()
 
-#     if injection_parameters is not None:
 
-#         for i in range(len(medians)):
-#             print(variables_to_plot[i], injection_parameters[i], medians[i])
+      
 
-#     else:
-#         for i in range(len(medians)):
-#             print(variables_to_plot[i], None, medians[i])
-#     print('-------------------------------')
+    #By default, plot canonical values
 
+
+
+
+        
 
 #     y_post = df_posterior[variables_to_plot].to_numpy()
 
@@ -262,48 +164,6 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1,state_phi_p
 
 
 
-    
-#     #Now plot it using corner.corner
-#     fs = 20
-#     newfig = corner.corner(y_post, 
-#                         color='C0',
-#                         show_titles=True,
-#                         smooth=smooth,smooth1d=smooth1d,
-#                         truth_color='C2',
-#                         quantiles=[0.16, 0.84], #[0.16, 0.84]
-#                         truths = injection_parameters,
-#                         range=ranges,
-#                         labels = labels,
-#                         label_kwargs=dict(fontsize=fs),
-#                         axes_scales = axes_scales,
-#                         fig=fig)
-            
-
-#     #Pretty-ify
-#     for ax in newfig.axes:
-
-#         if ax.lines: #is anything plotted on this axis?
-            
-#             ax.yaxis.set_major_locator(plt.MaxNLocator(3))
-#             ax.xaxis.set_major_locator(plt.MaxNLocator(3))
-
-#             ax.yaxis.set_tick_params(labelsize=fs-6)
-#             ax.xaxis.set_tick_params(labelsize=fs-6)
-
-
-#         ax.title.set_size(18)
-       
-
-
-#     if savefig is not None:
-#         plt.savefig(f"../data/images/{savefig}.png", bbox_inches="tight",dpi=300)
-        
-#     if title is not None:
-#         newfig.suptitle(title, fontsize=20)  
-    
-
-
-#     return model_evidence
 
     
 
