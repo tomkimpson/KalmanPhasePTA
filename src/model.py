@@ -73,6 +73,6 @@ def Q_function(γ,σp,dt,Npsr):
 The R matrix as a scalar - same noise covariance for all pulsars
 """
 @njit(fastmath=True)
-def R_function(sigma_m,Npsr):
+def R_function(sigma_m):
     return sigma_m**2
     

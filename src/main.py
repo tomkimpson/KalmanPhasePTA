@@ -41,11 +41,11 @@ def bilby_inference_run(arg_name):
 
 
 
-    # #Run it again to profile
-    # with Profile() as profile:
-    #     model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
-    #     stats = Stats(profile)
-    #     stats.sort_stats('tottime').print_stats(50)
+    #Run it again to profile
+    with Profile() as profile:
+        model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
+        stats = Stats(profile)
+        stats.sort_stats('tottime').print_stats(50)
 
     
 

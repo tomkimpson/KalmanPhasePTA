@@ -27,9 +27,9 @@ def bilby_priors_dict(PTA,P,set_state_parameters_as_known=False,set_measurement_
     #State priors
     init_parameters,priors = _set_prior_on_state_parameters(init_parameters,priors,PTA, set_state_parameters_as_known)
  
-    #Measurement noise priors. Always known
-    init_parameters["sigma_m"] = None
-    priors["sigma_m"] = P.σm
+    # #Measurement noise priors. Always known
+    # init_parameters["sigma_m"] = None
+    # priors["sigma_m"] = P.σm
 
     return init_parameters,priors
     

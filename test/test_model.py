@@ -17,13 +17,13 @@ def test_shapes_of_update_matrices():
         
         F = model.F_function(P.γ, PTA.dt,PTA.Npsr)
         Q = model.Q_function(P.γ,P.σp,PTA.dt,PTA.Npsr)
-        R = model.R_function(P.σm,PTA.Npsr)
+        R = model.R_function(P.σm)
 
 
         assert F.shape == (2*PTA.Npsr, 2*PTA.Npsr) 
         assert Q.shape == F.shape
-        assert R.shape == (PTA.Npsr, PTA.Npsr) 
 
+        #Floats have no shape so no shape test for R
 
 """Check the matrices reduced to what we expect in the zero case"""
 def test_zero_values():
@@ -38,7 +38,7 @@ def test_zero_values():
 
 
 
-    R = model.R_function(0.0,Npsr)
+    R = model.R_function(0.0)
     assert np.all(R == np.zeros(Npsr)) #when dt is zero, F is just an identity matrix
 
 

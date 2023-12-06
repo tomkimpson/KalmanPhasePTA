@@ -9,12 +9,17 @@ from utils import block_diag_view_jit
 
 from scipy.sparse import csr_array,csc_array,identity
 from scipy.sparse.linalg import inv as sparse_inv
-
 import scipy
+
+
+
+# This is a copy of src/kalman_filter.py but without using the various optimisations in the update step
+# This just checks that the results are the same and our assumptions hold
+
+
 """
 Kalman likelihood
 """
-@njit(fastmath=True)
 def log_likelihood(y,cov):
     N = len(y)
     x = y/cov
@@ -30,21 +35,24 @@ def log_likelihood(y,cov):
 """
 Kalman update step
 """
-#@njit(fastmath=True)
 def update(x, P, observation,R,H,GW,ephemeris):
 
     y_predicted = H@x - GW*ephemeris
     y           = observation - y_predicted
-    N = len(y)
-    S = scipy.linalg.eigvalsh(P)[N:] + R # S is diagonal. This means it corresponds to the eigenvals of P. i.e. H diagonalises P
-    K = np.divide(P@H.T,S) #because S is diagonal
+    S           = H@P@H.T + R
+    Sinv        = np.linalg.inv(S) 
+    K           = P@H.T@Sinv
     xnew        = x + K@y
-
-
-
-    Pnew = (np.eye(2*N) - K@H) @ P
+    #Update the covariance 
+    #Following FilterPy https://github.com/rlabbe/filterpy/blob/master/filterpy/kalman/EKF.py by using
+    #P = (I-KH)P(I-KH)' + KRK' which is more numerically stable
+    #and works for non-optimal K vs the equation
+    #P = (I-KH)P usually seen in the literature.
+    N = len(y)
+    I_KH = np.eye(2*N) - K@H
+    Pnew = I_KH @ P @ I_KH.T + K @ R @ K.T
     
-    ll = log_likelihood(y,S)
+    ll = log_likelihood(y,np.diag(S)) 
 
     #Map back from the state to measurement space. We can surface and plot this variable
     ypred = H@xnew - GW*ephemeris
@@ -53,9 +61,10 @@ def update(x, P, observation,R,H,GW,ephemeris):
 """
 Kalman predict step for diagonal matrices where everything is considered as a 1d vector
 """
-# @njit(fastmath=True)
 def predict(x,P,F,Q): 
-    return F@x,F@P@F.T + Q  
+    xp = F@x
+    Pp = F@P@F.T + Q  
+    return xp,Pp
 
 
 
@@ -147,8 +156,8 @@ class KalmanFilter:
 
         #self.P0 = block_diag_view_jit(component_array,self.Npsr) #we need to apply this over N pulsars
 
-        #Precompute R - it is just a scalar
-        self.R = R_function(PTA.σm)
+        self.R = np.eye(self.Npsr)*PTA.σm**2
+
 
     """
     Bilby provides samples from prior as a dict
@@ -176,12 +185,10 @@ class KalmanFilter:
         gamma = parameters_dict["gamma"].item()
         sigma_p = parameters_dict["sigma_p"].item()
 
-        #Other noise parameters
-        #sigma_m = parameters_dict["sigma_m"]#.item() #float, known
-
+ 
+    
         return omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
                f,fdot,gamma,chi,sigma_p
-            
 
 
 
@@ -191,7 +198,7 @@ class KalmanFilter:
 
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-        f,fdot,gamma,chi,sigma_p = self.parse_dictionary(parameters) 
+        f,fdot,gamma,chi,sigma_p= self.parse_dictionary(parameters) 
         
         #Precompute transition/Q/R Kalman matrices
         #F,Q,R are time-independent functions of the parameters
