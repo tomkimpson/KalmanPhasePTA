@@ -21,7 +21,7 @@ def bilby_inference_run(arg_name):
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(seed=1230,Npsr=2,σm=5e-7)    # User-specifed system parameters
+    P   = SystemParameters(seed=1230,Npsr=0,σm=5e-7)    # User-specifed system parameters
     PTA = Pulsars(P)            # All pulsar-related quantities
     data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
@@ -36,16 +36,23 @@ def bilby_inference_run(arg_name):
     #We get the correct parameters via Bilby dictionary, looking towards when we will run this with nested sampling
     init_parameters,optimal_parameters_dict = bilby_priors_dict(PTA,P,set_state_parameters_as_known=True,set_measurement_parameters_as_known=True)
     optimal_parameters = optimal_parameters_dict.sample(1)    
-    model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
+    model_likelihood = KF.likelihood(optimal_parameters)
     logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
+
+
+    #time it 
+    t0 = time.time()
+    model_likelihood = KF.likelihood(optimal_parameters)
+    t1 = time.time()
+    print("Runtime = ", t1-t0)
 
 
 
     #Run it again to profile
     with Profile() as profile:
-        model_likelihood,xresults,yresults = KF.likelihood(optimal_parameters)
+        model_likelihood= KF.likelihood(optimal_parameters)
         stats = Stats(profile)
-        stats.sort_stats('tottime').print_stats(50)
+        stats.sort_stats('tottime').print_stats(10)
 
     
 
