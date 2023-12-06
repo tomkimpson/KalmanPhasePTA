@@ -27,9 +27,9 @@ def bilby_priors_dict(PTA,P,set_state_parameters_as_known=False,set_measurement_
     #State priors
     init_parameters,priors = _set_prior_on_state_parameters(init_parameters,priors,PTA, set_state_parameters_as_known)
  
-    #Measurement noise priors. Always known
-    init_parameters["sigma_m"] = None
-    priors["sigma_m"] = P.σm
+    # #Measurement noise priors. Always known
+    # init_parameters["sigma_m"] = None
+    # priors["sigma_m"] = P.σm
 
     return init_parameters,priors
     
@@ -127,8 +127,8 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
 
 
         #For now, just one gamma and sigma p
-        init_parameters["gamma"] = None
-        priors["gamma"] = PTA.γ[0]
+        #init_parameters["gamma"] = None
+        #priors["gamma"] = PTA.γ[0]
 
         init_parameters["sigma_p"] = None
         priors["sigma_p"] = PTA.σp[0]
@@ -143,8 +143,8 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
 
 
         #For now, just one gamma and sigma p
-        init_parameters["gamma"] = None
-        priors["gamma"] = PTA.γ[0] #fixed at true value. Don't bother trying to infer
+        #init_parameters["gamma"] = None
+        #priors["gamma"] = PTA.γ[0] #fixed at true value. Don't bother trying to infer
 
         init_parameters["sigma_p"] = None
         priors["sigma_p"] = bilby.core.prior.LogUniform(PTA.σp[0]/10, PTA.σp[0]*10, 'sigma_p') 

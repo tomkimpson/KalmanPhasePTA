@@ -12,7 +12,7 @@ class BilbyLikelihood(bilby.Likelihood):
         self.model = KalmanModel
         
     def log_likelihood(self):
-        ll,xres,yres = self.model.likelihood(self.parameters)
+        ll = self.model.likelihood(self.parameters)
         return ll
     
             

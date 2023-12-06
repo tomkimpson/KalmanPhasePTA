@@ -12,16 +12,18 @@ from bilby_wrapper import BilbySampler
 
 import sys 
 import time 
-import numpy as np 
 
 
+# This is a profiling script used to see how long individual likelihood evaluatins take
+# It is analogous to main.py, but without the Bilby Bayesian inference
+# The likelihood runtime is a key constraint on how long the sampler takes, so we want to get this as small as possible
 
 
-def bilby_inference_run(arg_name):
+def bilby_inference_run():
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(seed=1230,Npsr=0,σm=2*np.pi*1e-5)    # User-specifed system parameters
+    P   = SystemParameters(seed=1230,Npsr=0,σm=5e-7)    # User-specifed system parameters
     PTA = Pulsars(P)            # All pulsar-related quantities
     data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
@@ -40,26 +42,29 @@ def bilby_inference_run(arg_name):
     logging.info(f"Ideal likelihood given optimal parameters = {model_likelihood}")
 
 
-    #Bilby
-    init_parameters, priors = bilby_priors_dict(PTA,P)
-   
 
-    logging.info("Testing KF using parameters sampled from prior")
-    params = priors.sample(1)
-    model_likelihood= KF.likelihood(params)
-    logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
+
+    #First time it naively
+    t0 = time.time()
+    model_likelihood = KF.likelihood(optimal_parameters)
+    t1=time.time()
+    print("Runtime = ", t1-t0)
+
+
+    #Run it again to profile
+    from cProfile import Profile
+    from pstats import Stats
+    with Profile() as profile:
+        model_likelihood = KF.likelihood(optimal_parameters)
+        stats = Stats(profile)
+        stats.sort_stats('tottime').print_stats(10)
 
     
-    #Now run the Bilby sampler
-    BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/",npoints=1000)
-    logging.info("The run has completed OK")
+    print ("Check likelihood is reasonable = ", model_likelihood)
+   
 
-
-
-
-arg_name = sys.argv[1]           # reference name
 if __name__=="__main__":
-    bilby_inference_run(arg_name)
+    bilby_inference_run()
 
 
 
