@@ -12,7 +12,7 @@ from bilby_wrapper import BilbySampler
 
 import sys 
 import time 
-
+import numpy as np 
 
 
 
@@ -21,7 +21,7 @@ def bilby_inference_run(arg_name):
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(seed=1230,Npsr=0,σm=5e-7)    # User-specifed system parameters
+    P   = SystemParameters(seed=1230,Npsr=0,σm=2*np.pi*1e-5)    # User-specifed system parameters
     PTA = Pulsars(P)            # All pulsar-related quantities
     data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
@@ -46,7 +46,7 @@ def bilby_inference_run(arg_name):
 
     logging.info("Testing KF using parameters sampled from prior")
     params = priors.sample(1)
-    model_likelihood,xresults,yresults = KF.likelihood(params)
+    model_likelihood= KF.likelihood(params)
     logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
 
     

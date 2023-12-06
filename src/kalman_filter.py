@@ -252,19 +252,15 @@ class KalmanFilter:
 
 
 
-    #todo
-    def likelihood_slow(self,parameters):
+    def likelihood_plotter(self,parameters):
 
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
         f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
         
         #Precompute transition/Q/R Kalman matrices
-        #F,Q,R are time-independent functions of the parameters
-        #F = F_function(gamma,self.dt,self.Npsr)
-        #R = R_function(sigma_m,self.Npsr)
-        #Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
         F = self.F 
+        F_transpose = self.F_transpose
         Q = self.Q * sigma_p**2
      
         #Initialise x and P
@@ -285,8 +281,7 @@ class KalmanFilter:
                                    phi0_gw,
                                    chi
                                 )
-        #H = compute_total_H_matrix(GW)
-        #H=1.0
+
 
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
@@ -297,7 +292,7 @@ class KalmanFilter:
               
        
         #Do the first update step
-        x,P,likelihood_value,y_predicted = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
 
 
@@ -308,12 +303,15 @@ class KalmanFilter:
         y_results = np.zeros((self.Nsteps,self.Npsr))
 
         
-        y_results[0,:] = y_predicted 
+        #y_results[0,:] = y_predicted 
         for i in np.arange(1,self.Nsteps):
             obs                              = self.observations[i,:]                                     #The observation at this timestep
-            x_predict, P_predict             = predict(x,P,F,Q)                                           #The predict step
-            x,P,likelihood_value,y_predicted = update(x_predict,P_predict, self.observations[i,:],self.R,GW[0,:],ephemeris[i,:]) #The update step    
+            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
+            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
+
+            H              = construct_H_matrix(GW[i,:])    #Determine the H matrix for this step
+            y_predicted =  H@x - GW[i,:]*ephemeris[i,:]
     
             x_results[i,:] = x
             y_results[i,:] = y_predicted
