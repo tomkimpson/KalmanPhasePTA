@@ -83,13 +83,12 @@ def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,lab
         #Set-up defaults
         if injection_parameters is None:
             injection_parameters = injection_parameters = [5e-7,0.20,2.50,1.0,1.0,1.0,5e-15]
-        if ranges is None:
-            ranges=[(4.95e-7,5.05e-7),(-0.2,1.0),(2.0,3.0),(-0.2,np.pi/2),(0.5,1.5),(0.5,1.5),(0.5*5e-15,1.5*5e-15)]
+        #if ranges is None: #for now let the ranges be whatever
+            #ranges=[(4.95e-7,5.05e-7),(-0.2,1.0),(2.0,3.0),(-0.2,np.pi/2),(0.5,1.5),(0.5,1.5),(0.5*5e-15,1.5*5e-15)]
         if labels is None:
             labels = [r'$\Omega$',r'$\Phi_0$',r'$\psi$',r'$\iota$', r'$\delta$',r'$\alpha$',r'$h_{0, \times 10}$']
         if variables_to_plot is None:
             variables_to_plot = ["omega_gw","phi0_gw","psi_gw","iota_gw","delta_gw","alpha_gw", "h"]
-
 
         #Create a numpy array of the variables you want to plot
         y_post = df_posterior[variables_to_plot].to_numpy()
