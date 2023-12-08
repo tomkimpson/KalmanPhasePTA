@@ -1,7 +1,7 @@
 import bilby
 import logging
 logger = logging.getLogger(__name__).setLevel(logging.INFO)
-
+import os
 import sys
 """Here is some test documentation"""
 class BilbyLikelihood(bilby.Likelihood):
@@ -23,6 +23,22 @@ def BilbySampler(KalmanFilter,init_parameters,priors,NS_settings):
 
     #Run the sampler
     logging.info("Starting the bilby sampler")
+
+
+    #In practice I find that the resume argument does not work properly with Bilby
+    #If a resume file exists, it uses it, regardless of whether we set resume=True/False
+    #But what if we want to overwrite any existing file that has the same label?
+    #We handle that by deleting the resume file, which is not ideal, but works OK in pratice. 
+
+    if ~NS_settings.resume: #if we are not resuming
+        resume_file = NS_settings.outdir + NS_settings.label+'_resume.pickle'
+        if os.path.exists(resume_file): #but a file exists
+            logging.info(f"Overwriting existing resume file: {resume_file}")
+            os.remove(resume_file) #delete that resume file
+
+
+
+
     result = bilby.run_sampler(likelihood, priors, 
                               label            =NS_settings.label,
                               outdir           =NS_settings.outdir,

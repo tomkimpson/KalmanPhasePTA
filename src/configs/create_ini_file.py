@@ -1,5 +1,5 @@
 import configparser
-
+import numpy as np
 # A script for constructing a config file to be read by the files in `src`
 # This should enforce reproducibility - no free parameters in `src`
 
@@ -25,8 +25,8 @@ config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the
 
 config['OBS_PARAMETERS'] = {'T': 10,       # how long to integrate for in years
                             'cadence': 7,  # the interval between observations in days
-                            'σm':1e-11,    # measurement noise standard deviation
-                            'seed':1,      # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
+                            'σm':2*np.pi*1e-5,    # measurement noise standard deviation
+                            'seed':1230,      # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
                              }
 
 
@@ -36,7 +36,7 @@ config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what d
                        'outdir': "../data/nested_sampling/", # where to store the run output
                        'sampler': 'dynesty',                 # sampler to use
                        'sample': 'rwalk_dynesty',            # sampling method
-                       'bound': 'multi',                     # bounding method. Other options include 'single', 'auto'. See https://dynesty.readthedocs.io/en/latest/faq.html
+                       'bound': 'live',                     # bounding method. Other options include 'single', 'auto'. See https://dynesty.readthedocs.io/en/latest/faq.html
                        'dlogz': 0.1,                         # termination criteria
                        'npoints':1000,                       # number of live points
                        'npool': 1,                           # number of parallel threads

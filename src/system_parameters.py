@@ -87,5 +87,5 @@ class NestedSamplerSettings:
             self.dlogz   = float(INF['dlogz'])
             self.npoints = int(INF['npoints'])
             self.npool   = int(INF['npool'])
-            self.plot    = INF['plot']
-            self.resume  = INF['resume']
+            self.plot    = bool(INF['plot'])
+            self.resume  = bool(INF['resume'])
