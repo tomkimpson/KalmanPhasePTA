@@ -115,22 +115,47 @@ class SystemParameters:
 """
 class NestedSamplerSettings:
 
-        def __init__(self,config_file): 
+        def __init__(self,config_file=None,
+                     label='example',
+                     outdir = '../data/nested_sampling/',
+                     sampler = 'dynesty',
+                     sample = 'rwalk_dynesty',
+                     bound = 'multi',
+                     dlogz=0.1,
+                     npoints=1000,
+                     npool=1,
+                     plot=False,
+                     resume=False
+                     ): 
 
             logging.info("Getting the settings for nested sampling")
 
-            #Read in the config file
-            config = configparser.ConfigParser()
-            config.read(config_file)
+            if config_file is not None:
+                #Read in the config file
+                config = configparser.ConfigParser()
+                config.read(config_file)
+                logging.info("NS settings from config file")
 
-            INF = config['INFERENCE_PARAMETERS']
-            self.label   = INF['label']
-            self.outdir  = INF['outdir']
-            self.sampler = INF['sampler']
-            self.sample  = INF['sample']
-            self.bound   = INF['bound']
-            self.dlogz   = float(INF['dlogz'])
-            self.npoints = int(INF['npoints'])
-            self.npool   = int(INF['npool'])
-            self.plot    = bool(INF['plot'])
-            self.resume  = bool(INF['resume'])
+                INF = config['INFERENCE_PARAMETERS']
+                self.label   = INF['label']
+                self.outdir  = INF['outdir']
+                self.sampler = INF['sampler']
+                self.sample  = INF['sample']
+                self.bound   = INF['bound']
+                self.dlogz   = float(INF['dlogz'])
+                self.npoints = int(INF['npoints'])
+                self.npool   = int(INF['npool'])
+                self.plot    = bool(INF['plot'])
+                self.resume  = bool(INF['resume'])
+
+            else: #just assign canonical values. Almost never used, just here for consistency
+                self.label   = label
+                self.outdir  = outdir
+                self.sampler = sampler
+                self.sample  = sample
+                self.bound   = bound
+                self.dlogz   = dlogz
+                self.npoints = npoints
+                self.npool   = npool
+                self.plot    = plot
+                self.resume  = resume
