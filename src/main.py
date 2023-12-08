@@ -13,6 +13,7 @@ from bilby_wrapper import BilbySampler
 import sys 
 import time 
 import numpy as np 
+import shutil
 
 
 
@@ -53,6 +54,13 @@ def bilby_inference_run(config_file):
     #Now run the Bilby sampler
     NS_settings = NestedSamplerSettings(config_file)
     BilbySampler(KF,init_parameters,priors,NS_settings)
+
+
+    #Also save the config file in the same place the nested sampling results go
+    shutil.copy(config_file, NS_settings.outdir+NS_settings.label+'_config.ini')
+
+
+
     logging.info("The run has completed OK")
 
 
