@@ -38,11 +38,10 @@ def construct_H_matrix(some_vector):
     return some_matrix
 
 
-
 """
 Kalman update step
 """
-#@njit(fastmath=True)
+@njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
     
     H           = construct_H_matrix(GW)    #Determine the H matrix for this step
