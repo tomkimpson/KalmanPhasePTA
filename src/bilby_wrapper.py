@@ -16,7 +16,7 @@ class BilbyLikelihood(bilby.Likelihood):
         return ll
     
             
-def BilbySampler(KalmanFilter,init_parameters,priors,label,outdir,npoints):
+def BilbySampler(KalmanFilter,init_parameters,priors,NS_settings):
    
     
     likelihood = BilbyLikelihood(KalmanFilter,init_parameters)
@@ -24,15 +24,16 @@ def BilbySampler(KalmanFilter,init_parameters,priors,label,outdir,npoints):
     #Run the sampler
     logging.info("Starting the bilby sampler")
     result = bilby.run_sampler(likelihood, priors, 
-                              label = label,
-                              outdir=outdir,
-                              sampler ='dynesty',
-                              sample='rwalk_dynesty',
-                              #bound='single', # https://dynesty.readthedocs.io/en/latest/faq.html
-                              check_point_plot=False,
-                              npoints=npoints,
-                              dlogz=0.1,
-                              npool=1,
-                              plot=False,resume=False)
+                              label            =NS_settings.label,
+                              outdir           =NS_settings.outdir,
+                              sampler          =NS_settings.sampler,
+                              sample           =NS_settings.sample,
+                              bound            =NS_settings.bound,
+                              check_point_plot =False,
+                              npoints          =NS_settings.npoints,
+                              dlogz            =NS_settings.dlogz,
+                              npool            =NS_settings.npool,
+                              plot             =NS_settings.plot,
+                              resume           =NS_settings.resume)
 
     return result
