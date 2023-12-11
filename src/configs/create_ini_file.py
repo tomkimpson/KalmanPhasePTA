@@ -32,7 +32,7 @@ config['OBS_PARAMETERS'] = {'T': 10,       # how long to integrate for in years
 
 
 config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what do you want the KF measurement model to be? One of pulsar, earth,null
-                       'label': 'example_run',               # name of the run 
+                       'label': 'test_config_inputs',               # name of the run 
                        'outdir': "../data/nested_sampling/", # where to store the run output
                        'sampler': 'dynesty',                 # sampler to use
                        'sample': 'rwalk_dynesty',            # sampling method

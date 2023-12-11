@@ -1,8 +1,14 @@
 
 
 import sys
-### A python script that accepts a name argument and populates a slurm file 
-arg_name = sys.argv[1]
+import configparser
+
+### A python script that accepts a config file path and populates a slurm file 
+config_file = sys.argv[1]
+config = configparser.ConfigParser()
+config.read(config_file)
+arg_name = config['INFERENCE_PARAMETERS']['label']
+
 with open('slurm.sh','w') as g:
 
     g.write("#!/bin/bash \n \n")  
@@ -14,8 +20,7 @@ with open('slurm.sh','w') as g:
 
     g.write("source ~/.bashrc \n")
     g.write("conda activate OzStar \n")
-    g.write(f"time python main.py {arg_name}")
+    g.write(f"time python main.py {config_file}")
     
     
     
-

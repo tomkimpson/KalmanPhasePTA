@@ -108,6 +108,7 @@ def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,lab
                             label_kwargs=dict(fontsize=fs))
         print(f"Model evidence is {evidence}")
         print(f"The number of samples is {len(df_posterior)}")
+        print(f"The median values are {df_posterior[variables_to_plot].median()}")
             
 
         #Pretty-ify
