@@ -49,7 +49,7 @@ def bilby_inference_run(config_file):
     params = priors.sample(1)
     model_likelihood= KF.likelihood(params)
     logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
-    
+    sys.exit()
     #Now run the Bilby sampler
     NS_settings = NestedSamplerSettings(config_file)
     BilbySampler(KF,init_parameters,priors,NS_settings)
