@@ -45,5 +45,5 @@ config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what d
                       }
 
 
-with open('example.ini', 'w') as configfile:
+with open('configs/example.ini', 'w') as configfile:
   config.write(configfile)
