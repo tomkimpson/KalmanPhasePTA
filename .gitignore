@@ -1,6 +1,6 @@
 .DS_Store
 **/__pycache__
 data/*
-
+src/configs/example.ini
 
 !data/NANOGrav_pulsars.csv
