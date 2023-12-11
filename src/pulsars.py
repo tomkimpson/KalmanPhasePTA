@@ -9,8 +9,8 @@ from pathlib import Path
 import os 
 
 
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parent.parent
+# def get_project_root() -> Path:
+#     return Path(__file__).resolve().parent.parent
 
 
 class Pulsars:
@@ -26,18 +26,18 @@ class Pulsars:
 
 
         #Load the pulsar data
-        root = get_project_root()
-        pulsars = pd.read_csv(root / "data/NANOGrav_pulsars.csv")
+        #root = get_project_root()
+        pulsars = pd.read_csv(SystemParameters.PTA_file)
 
         if SystemParameters.Npsr != 0:
             pulsars = pulsars.sample(SystemParameters.Npsr,random_state=SystemParameters.seed) #can also use  pulsars.head(N) to sample  
 
         
         #Extract the parameters
-        self.f         = pulsars["F0"].to_numpy()            # Hz
-        self.fdot      = pulsars["F1"] .to_numpy()           # s^-2
-        self.d         = pulsars["DIST"].to_numpy()*1e3*pc/c # this is in units of s^-1
-        self.γ         = np.ones_like(self.f) * SystemParameters.γ       # for every pulsar let γ be 1e-13. Hardcoded value, i.e. not a variable in SystemParameters
+        self.f         = pulsars["F0"].to_numpy()                    # Hz
+        self.fdot      = pulsars["F1"] .to_numpy()                   # s^-2
+        self.d         = pulsars["DIST"].to_numpy()*1e3*pc/c         # this is in units of s^-1
+        self.γ         = np.ones_like(self.f) * SystemParameters.γ   # for every pulsar let γ be 1e-13. Hardcoded value, i.e. not a variable in SystemParameters
         self.δ         = pulsars["DECJD"].to_numpy()                 # radians
         self.α         = pulsars["RAJD"].to_numpy()                  # radians
 

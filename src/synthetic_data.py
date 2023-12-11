@@ -3,7 +3,7 @@
 import sdeint
 # import numpy as np 
 
-from gravitational_waves import gw_earth_terms,gw_psr_terms
+from gravitational_waves import gw_psr_terms
 
 
 import logging
@@ -60,19 +60,22 @@ class SyntheticData:
         self.state_f = state[:,1::2]
 
 
-        # #Now calculate the modulation factor due to the GW        
-        if P.use_psr_terms_in_data:
-            GW_function = gw_psr_terms
-            logging.info("You are including the PSR terms in your synthetic data generation")
-        else:
-            GW_function = gw_earth_terms
-            logging.info("You are using just the Earth terms in your synthetic data generation")
+        # #Now calculate the modulation factor due to the GW   
+        #GW_function = gw_psr_terms 
+        # 
+        #      
+        # if P.use_psr_terms_in_data:
+            
+        #     logging.info("You are including the PSR terms in your synthetic data generation")
+        # else:
+        #     GW_function = gw_earth_terms
+        #     logging.info("You are using just the Earth terms in your synthetic data generation")
 
 
 
 
         #Now get the heterodyned phi measured at the detector
-        GW = GW_function(
+        GW = gw_psr_terms(
                                         P.δ,
                                         P.α,
                                         P.ψ,

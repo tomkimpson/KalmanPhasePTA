@@ -2,7 +2,7 @@
 
 
 import logging 
-from system_parameters import SystemParameters
+from system_parameters import SystemParameters,NestedSamplerSettings
 from pulsars import Pulsars
 from synthetic_data import SyntheticData
 from model import PhaseModel
@@ -13,17 +13,18 @@ from bilby_wrapper import BilbySampler
 import sys 
 import time 
 import numpy as np 
+import shutil
 
 
 
 
-def bilby_inference_run(arg_name):
+def bilby_inference_run(config_file):
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(seed=1230,Npsr=0,σm=2*np.pi*1e-5)    # User-specifed system parameters
-    PTA = Pulsars(P)            # All pulsar-related quantities
-    data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
+    P   = SystemParameters(config_file)    # System parameters read from config file
+    PTA = Pulsars(P)                       # All pulsar-related quantities
+    data = SyntheticData(PTA,P)            # Given the system parameters and the PTA configuration, create some synthetic data
     
     #Define the model to be used by the Kalman Filter
     model = PhaseModel(P,PTA)
@@ -51,15 +52,23 @@ def bilby_inference_run(arg_name):
 
     
     #Now run the Bilby sampler
-    BilbySampler(KF,init_parameters,priors,label=arg_name,outdir="../data/nested_sampling/",npoints=1000)
+    NS_settings = NestedSamplerSettings(config_file)
+    BilbySampler(KF,init_parameters,priors,NS_settings)
+
+
+    #Also save the config file in the same place the nested sampling results go
+    shutil.copy(config_file, NS_settings.outdir+NS_settings.label+'_config.ini')
+
+
+
     logging.info("The run has completed OK")
 
 
 
 
-arg_name = sys.argv[1]           # reference name
+config_file = sys.argv[1]           # reference name
 if __name__=="__main__":
-    bilby_inference_run(arg_name)
+    bilby_inference_run(config_file)
 
 
 
