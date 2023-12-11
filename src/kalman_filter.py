@@ -182,8 +182,7 @@ class KalmanFilter:
         #sigma_m = parameters_dict["sigma_m"]#.item() #float, known
 
         return omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
-               f,fdot,chi,sigma_p#,\
-              # sigma_m
+               f,fdot,chi,sigma_p
 
 
 
@@ -222,8 +221,6 @@ class KalmanFilter:
                                    phi0_gw,
                                    chi
                                 )
-        #H = compute_total_H_matrix(GW)
-        #H=1.0
 
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction

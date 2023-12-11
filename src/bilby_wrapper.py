@@ -28,7 +28,7 @@ def BilbySampler(KalmanFilter,init_parameters,priors,NS_settings):
     #In practice I find that the resume argument does not work properly with Bilby
     #If a resume file exists, it uses it, regardless of whether we set resume=True/False
     #But what if we want to overwrite any existing file that has the same label?
-    #We handle that by deleting the resume file, which is not ideal, but works OK in pratice. 
+    #We handle that by deleting the resume file, which is not ideal, but works OK in practice. 
 
     if ~NS_settings.resume: #if we are not resuming
         resume_file = NS_settings.outdir + NS_settings.label+'_resume.pickle'

@@ -58,7 +58,7 @@ def test_principal_axes():
 
 
 
-"""Check the polarisation tensors works  """
+"""Check the polarisation tensors principle works  """
 def test_polarisation_tensors():
     
 
@@ -87,6 +87,7 @@ def test_polarisation_tensors():
     np.testing.assert_almost_equal(e_plus, e_plus_manual.flatten())
     np.testing.assert_almost_equal(e_cross, e_cross_manual.flatten())
     
+
 
 
 

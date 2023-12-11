@@ -12,8 +12,6 @@ Todo: check performance of explicit JIT loops
 @njit(fastmath=True)
 def _polarisation_tensors(m, n):
 
-
-
     # For e_+,e_x, Tensordot might be a bit faster, but list comprehension has JIT support
     # Note these are 1D arrays, rather than the usual 2D struture
     #todo: check these for speed up
@@ -21,23 +19,6 @@ def _polarisation_tensors(m, n):
     e_cross             = np.array([m[i]*n[j]+n[i]*m[j] for i in range(3) for j in range(3)])
 
     return e_plus,e_cross
-
-
-
-# @njit(fastmath=True)
-# def  _polarisation_tensors(m, n):
-#     e_matrix_plus = np.zeros((9))
-#     e_matrix_cross= np.zeros((9))
-#     k = 0
-#     for i in range(3):
-#         for j in range(3):
-#             e_matrix_plus[k] = m[i]*m[j]-n[i]*n[j]
-#             e_matrix_cross[k] = m[i]*n[j]+n[i]*m[j]
-#             k +=1
-
-#     return e_matrix_plus,e_matrix_cross
-
-
 
 
 
