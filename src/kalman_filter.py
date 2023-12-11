@@ -242,7 +242,7 @@ class KalmanFilter:
         for i in np.arange(1,self.Nsteps):
             obs                              = self.observations[i,:]                                     #The observation at this timestep
             x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
-            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[0,:],ephemeris[i,:]) #The update step    
+            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
 
          
