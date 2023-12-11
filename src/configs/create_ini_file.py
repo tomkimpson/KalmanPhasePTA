@@ -25,7 +25,7 @@ config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the
 
 config['OBS_PARAMETERS'] = {'T': 10,       # how long to integrate for in years
                             'cadence': 7,  # the interval between observations in days
-                            'σm':2*np.pi*1e-5,    # measurement noise standard deviation
+                            'σm':2*np.pi*1e-6,    # measurement noise standard deviation
                             'seed':1230,      # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
                              }
 
