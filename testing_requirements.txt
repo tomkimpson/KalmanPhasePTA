@@ -8,3 +8,4 @@ numba==0.56.4
 pandas==2.1.0
 sdeint==0.3.0
 scipy==1.9.1
+bilby==2.0.2
