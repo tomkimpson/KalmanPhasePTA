@@ -5,6 +5,7 @@ import logging
 logging.basicConfig()
 logging.getLogger(name="KalmanGW").setLevel(logging.INFO)
 import configparser
+from pathlib import Path
 
 """
 Class of parameters which define the system
@@ -101,14 +102,20 @@ class SystemParameters:
             self.measurement_model = measurement_model
             self.seed = seed
             self.γ = γ
-            self.PTA_file = "../data/NANOGrav_pulsars.csv" #hardcoded
+            root = get_project_root()
+            self.PTA_file = root / "data/NANOGrav_pulsars.csv" #hardcoded
 
 
 
         logging.info(f"Random seed is {self.seed}")
 
 
-        
+
+
+
+def get_project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
     
 """Class of parameters which define the settings used by the Bilby nested sampler
     Separate from SystemParameters for a) Organisation and b) I don't want to pass any true values to the sampler in any way 
