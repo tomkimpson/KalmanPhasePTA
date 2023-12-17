@@ -3,7 +3,7 @@ from numba import njit
 #from model import R_function # H function is defined via a class init. #todo change this! we want things defined in a class that is read by KalmanFilter
 
 
-#import sys
+import sys
 
 
 
@@ -43,17 +43,101 @@ def construct_H_matrix(some_vector):
 Kalman update step
 """
 #@njit(fastmath=True)
-def update(x, P, observation,R,GW,ephemeris):
+def update(phi,f,x, P,Ptest,observation,R,GW,ephemeris):
     
-    H           = construct_H_matrix(GW)    #Determine the H matrix for this step
-    y_predicted = H@x - GW*ephemeris        #The predicted y
+
+    
+    A,B,C,D = np.split(Ptest,4)
+    A = A.flatten()
+    B = B.flatten()
+    C = C.flatten()
+    D = D.flatten()
+
+    
+    #print()
+    y_predicted = phi - f*GW - GW*ephemeris
     y           = observation - y_predicted #The residual w.r.t actual data
-    HP          = H@P                       #Precompute H@P as a variable since we use it twice. Probably offers no real performance gain...
-    S           = np.diag(HP@H.T) + R       #S is diagonal
-    K           = np.divide(P@H.T,S)        #making use of diagonality of S
-    xnew        = x + K@y                   #update x
-    Pnew        =  P - K@HP                 #update P, using earlier defined HP
+    S           = A + GW * B + GW * C + (GW**2) * D + R
+    
+    print("Covar S = ", S, A)
+
+    # Calculate odd elements (indexing starts from 0)
+    K = np.zeros(2 * len(S))
+
+    Kodd = (A + GW * B)[::2] / S[::2]
+    Keven = (C + GW * D)[1::2] / S[1::2]
+    K[::2] = Kodd
+
+    # Calculate even elements
+    K[1::2] = Keven
+
+
+    xnew = x + K*np.repeat(y,2)
+
+
+    Anew = A*((1-Kodd) + C*(1-Kodd*GW))
+    Bnew = B*((1-Kodd) + D*(1-Kodd*GW))
+    Cnew = A*((1-Keven) + C*(1-Keven*GW))
+    Dnew = B*((1-Keven) + D*(1-Keven*GW))
+    
+    Pnew = np.array([Anew,Bnew,Cnew,Dnew])
     ll          = log_likelihood(y,S)       #and get the likelihood
+    print("likelihood=", ll)
+
+    if np.isnan(ll):
+        sys.exit()
+    
+
+
+    #H           = construct_H_matrix(GW)    #Determine the H matrix for this step
+    #y_predicted1 = H@x - GW*ephemeris        #The predicted y
+
+    #print(y_predicted)
+    #print(y_predicted1)
+    
+    
+   
+    #HP          = H@P                       #Precompute H@P as a variable since we use it twice. Probably offers no real performance gain...
+    #S1           = np.diag(HP@H.T) + R       #S is diagonal
+    #S1           = HP@H.T + np.eye(2)*R       #S is diagonal
+    #print(S1)
+
+
+    # print('S')
+    # print(S)
+    # print('S1')
+    # print(S1)
+
+
+    #print(S1.shape)
+    #print(S)
+    #print(S1)   
+    #sinv = np.linalg.inv(S1)
+    #K = P@H.T@sinv        #making use of diagonality of S
+
+
+ 
+
+    #print(S1)
+    #sys.exit()
+    
+    #y_predicted = H@x - GW*ephemeris        #The predicted y
+    
+
+    #K           = np.divide(P@H.T,S)        #making use of diagonality of S
+    #xnew        = x + K@y                   #update x
+
+
+ 
+
+    #print(xnew)
+    #print(xnew1)
+    #sys.exit()
+
+
+    
+    #Pnew        =  P - K@HP                 #update P, using earlier defined HP
+   
     
     return xnew, Pnew,ll
     
@@ -62,7 +146,49 @@ Kalman predict step
 """
 @njit(fastmath=True)
 def predict(x,P,F,F_transpose,Q): 
-    return F@x,F@P@F_transpose + Q  
+
+
+    
+    A,B,C,D = np.split(P,4)
+    A = A.flatten()
+    B = B.flatten()
+    C = C.flatten()
+    D = D.flatten()
+
+
+    #split x into phi and f 
+    state_phi = x[0::2]
+    state_f = x[1::2]
+
+
+    #Read in F
+    Fa = F[0,0]
+    Fb = F[0,1]
+    Fc = F[1,1]
+
+    #State predicitns
+    phi_predict = Fa*state_phi+Fb*state_f
+    f_predict = Fc*state_f
+
+
+    #Covar predictions
+    Qa = Q[0,0]
+    Qb = Q[0,1]
+    Qc = Q[1,0]
+    Qd = Q[1,1]
+
+    Ap = Fa*(A*Fa+B*Fb) + Fb*(C*Fa + D*Fb) + Qa
+    Bp = Fa*B*Fc + Fb*D*Fc + Qb
+    Cp = Fc*(C*Fa + D*Fb) + Qc
+    Dp = D*Fc**2 + Qd
+
+    print('Input A = ', A)
+    print("predicted A = ", Ap)
+
+    #xp = np.array([])
+
+    #return F@x,F@P@F_transpose + Q  
+    return phi_predict, f_predict, Ap,Bp,Cp,Dp
 
 
 """
@@ -209,6 +335,21 @@ class KalmanFilter:
         x = self.x0 
         P = self.P0
 
+        P[0,0] = 1e-5
+        P[0,1] = 1e-5
+        P[1,0] = 1e-5
+        P[1,1] = 1e-5
+
+
+        P[2,2] = 1e-5
+        P[2,3] = 1e-5
+        P[3,2] = 1e-5
+        P[3,3] = 1e-5
+
+
+        Ptest = np.ones(8)*1e-5
+
+
         # Precompute the influence of the GW
         # This is solely a function of the parameters and the t-variable but NOT the states
         GW = self.H_function(delta_gw,
@@ -223,8 +364,6 @@ class KalmanFilter:
                                    phi0_gw,
                                    chi
                                 )
-        #H = compute_total_H_matrix(GW)
-        #H=1.0
 
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
@@ -234,16 +373,25 @@ class KalmanFilter:
         ll = 0.0
               
        
+
+        #split x into phi and f 
+        state_phi = x[0::2]
+        state_f = x[1::2]
+
         #Do the first update step
-        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        x,P,likelihood_value = update(state_phi,state_f,x,P,Ptest, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
 
         
         #y_results[0,:] = y_predicted 
         for i in np.arange(1,self.Nsteps):
             obs                              = self.observations[i,:]                                     #The observation at this timestep
-            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
-            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[0,:],ephemeris[i,:]) #The update step    
+            #x_predict, P_predict             = predict(x,P,F,F_transpose,Q)   
+            
+            phi_predict, f_predict, Ap,Bp,Cp,Dp = predict(x,P,F,F_transpose,Q)  
+            Ptest = np.array([Ap,Bp,Cp,Dp])
+                                                    #The predict step
+            x,P,likelihood_value = update(phi_predict,f_predict,x,P,Ptest, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
 
          

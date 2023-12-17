@@ -23,7 +23,7 @@ def bilby_inference_run():
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(seed=1230,Npsr=0,σm=5e-7)    # User-specifed system parameters
+    P   = SystemParameters(seed=1230,Npsr=2,σm=5e-7)    # User-specifed system parameters
     PTA = Pulsars(P)            # All pulsar-related quantities
     data = SyntheticData(PTA,P) # Given the user parameters and the PTA configuration, create some synthetic data
     
