@@ -30,12 +30,14 @@ def BilbySampler(KalmanFilter,init_parameters,priors,NS_settings):
     #But what if we want to overwrite any existing file that has the same label?
     #We handle that by deleting the resume file, which is not ideal, but works OK in practice. 
 
-    if ~NS_settings.resume: #if we are not resuming
-        resume_file = NS_settings.outdir + NS_settings.label+'_resume.pickle'
+    resume_file = NS_settings.outdir + NS_settings.label+'_resume.pickle'
+    
+    if not NS_settings.resume: #if we are not resuming
         if os.path.exists(resume_file): #but a file exists
-            logging.info(f"Overwriting existing resume file: {resume_file}")
+            logging.info(f"Deleting existing resume file: {resume_file}")
             os.remove(resume_file) #delete that resume file
-
+    else:
+        logging.info(f"Existing resume file {resume_file} is being used to commence the run")
 
 
 

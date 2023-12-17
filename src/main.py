@@ -25,6 +25,13 @@ def bilby_inference_run(config_file):
     P   = SystemParameters(config_file)    # System parameters read from config file
     PTA = Pulsars(P)                       # All pulsar-related quantities
     data = SyntheticData(PTA,P)            # Given the system parameters and the PTA configuration, create some synthetic data
+
+
+    #Also save the config file in the same place the nested sampling results go
+    NS_settings = NestedSamplerSettings(config_file)
+    config_path = NS_settings.outdir+NS_settings.label+'_config.ini'
+    logging.info(f"Saving input config file to disk at: {config_path}")
+    shutil.copy(config_file, config_path)
     
     #Define the model to be used by the Kalman Filter
     model = PhaseModel(P,PTA)
@@ -49,12 +56,8 @@ def bilby_inference_run(config_file):
     logging.info(f"Non -ideal likelihood for randomly sampled parameters = {model_likelihood}")
 
     #Now run the Bilby sampler
-    NS_settings = NestedSamplerSettings(config_file)
     BilbySampler(KF,init_parameters,priors,NS_settings)
 
-
-    #Also save the config file in the same place the nested sampling results go
-    shutil.copy(config_file, NS_settings.outdir+NS_settings.label+'_config.ini')
 
 
 
