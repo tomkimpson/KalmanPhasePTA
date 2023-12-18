@@ -3,7 +3,7 @@ from numba import njit
 #from model import R_function # H function is defined via a class init. #todo change this! we want things defined in a class that is read by KalmanFilter
 
 
-#import sys
+import sys
 
 
 
@@ -11,7 +11,7 @@ from numba import njit
 """
 Kalman likelihood
 """
-@njit(fastmath=True)
+#@njit(fastmath=True)
 def log_likelihood(y,cov):
     N = len(y)
     x = y/cov
@@ -24,44 +24,59 @@ def log_likelihood(y,cov):
     return ll
 
 
-@njit(fastmath=True)
-def construct_H_matrix(some_vector):
-   
-    n = len(some_vector)
-    
-    some_matrix = np.zeros(2 * n**2)
-    step = 2 * (n + 1)
-    some_matrix[::step] = 1
-    some_matrix[1::step] = some_vector
-    some_matrix = some_matrix.reshape(n, 2*n)
-
-    return some_matrix
-
-
 """
 Kalman update step
 """
-@njit(fastmath=True)
-def update(x, P, observation,R,GW,ephemeris):
+#@njit(fastmath=True)
+def update(xφ,xf,A,B,C,D,observation,R,GW,ephemeris):
     
-    H           = construct_H_matrix(GW)    #Determine the H matrix for this step
-    y_predicted = H@x - GW*ephemeris        #The predicted y
+    y_predicted = xφ - xf*GW - GW*ephemeris #The predicted y
     y           = observation - y_predicted #The residual w.r.t actual data
-    HP          = H@P                       #Precompute H@P as a variable since we use it twice. Probably offers no real performance gain...
-    S           = np.diag(HP@H.T) + R       #S is diagonal
-    K           = np.divide(P@H.T,S)        #making use of diagonality of S
-    xnew        = x + K@y                   #update x
-    Pnew        =  P - K@HP                 #update P, using earlier defined HP
+    S = A - GW*B - GW*C + (GW**2)*D + R
+
+
+
+    Kodd = (A - GW * B) / S
+    Keven = (C - GW * D)/S
+
+    #Update state estimates
+    xφ_new = xφ + Kodd*y
+    xf_new = xf + Keven*y
+
+    #Update covariances
+    A_new = A*(1.0-Kodd) + Kodd*C*GW 
+    B_new = B*(1.0-Kodd) + Kodd*D*GW
+    C_new = -A*Keven + C*(1.0+Keven*GW)
+    D_new = -B*Keven + D*(1.0+Keven*GW)
+
+    #And get likelihood    
     ll          = log_likelihood(y,S)       #and get the likelihood
     
-    return xnew, Pnew,ll
+    return xφ_new,xf_new, A_new,B_new,C_new,D_new,ll
     
 """
 Kalman predict step
 """
-@njit(fastmath=True)
-def predict(x,P,F,F_transpose,Q): 
-    return F@x,F@P@F_transpose + Q  
+#@njit(fastmath=True)
+def predict(xφ,xf,A,B,C,D,Fx,Fy,Fz,Qa,Qb,Qc,Qd): 
+
+
+
+    xφ_predict = Fx*xφ + Fy*xf
+    xf_predict = Fz*xf
+
+
+
+    A_predict = Fx*(A*Fx + C*Fy) + Fy*(B*Fx +D*Fy) + Qa
+
+    B_predict = (B*Fx + D*Fy)*Fz + Qb
+
+    C_predict = C*Fx*Fz + D*Fy*Fz + Qc
+
+    D_predict =  D*Fz**2 + Qd
+
+
+    return xφ_predict,xf_predict,A_predict,B_predict,C_predict,D_predict
 
 
 """
@@ -125,7 +140,7 @@ class KalmanFilter:
         
         #How to initialise P ?
         #Option A - canonical
-        #self.P0=  np.eye(2*self.Npsr)* sigma_m * 1e5 #Guess that the uncertainty in the initial state is a few orders of magnitude greater than the measurement noise
+        #self.P0=  np.eye(2*self.Npsr)* 1e-6 * 1e5 #Guess that the uncertainty in the initial state is a few orders of magnitude greater than the measurement noise
 
         #Option B - zeroes
         self.P0=  np.eye(2*self.Npsr)* 0.0
@@ -134,14 +149,14 @@ class KalmanFilter:
         component_array = np.array([[0.0,0.0],
                                     [0.0,1e-3]])
 
-        #self.P0 = block_diag_view_jit(component_array,self.Npsr) #we need to apply this over N pulsars
 
-        #self.R = R_function(PTA.σm,self.Npsr)
         self.R = PTA.σm**2
-        self.F,self.Q = Model.kalman_machinery()
+        self.Fx,self.Fy,self.Fz,self.Qa,self.Qb, self.Qc, self.Qd = Model.kalman_machinery()
+        #print('len blob = ', len(blobfish))
+
 
         #We can also precompute the transpose of F
-        self.F_transpose = self.F.T
+        #self.F_transpose = self.F.T
 
 
         #Initialise Kalman machinery
@@ -199,9 +214,11 @@ class KalmanFilter:
         #F = F_function(gamma,self.dt,self.Npsr)
         #R = R_function(sigma_m,self.Npsr)
         #Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
-        F = self.F 
-        F_transpose = self.F_transpose
-        Q = self.Q * sigma_p**2
+         
+        
+        
+        
+        #Q = self.Q * sigma_p**2
      
         #Initialise x and P
         x = self.x0 
@@ -229,17 +246,30 @@ class KalmanFilter:
         #Initialise the likelihood
         ll = 0.0
               
+
+        #Split the state x into phi and f
+        xφ = x[0::2]
+        xf = x[1::2]
+        #...and the covariance
+       
+        A = np.zeros((self.Npsr))
+        B = np.zeros((self.Npsr))
+        C = np.zeros((self.Npsr))
+        D = np.zeros((self.Npsr))
+
+
+       
        
         #Do the first update step
-        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        xφ,xf, A,B,C,D,likelihood_value = update(xφ,xf,A,B,C,D,self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
-
-        
+  
+      
         #y_results[0,:] = y_predicted 
         for i in np.arange(1,self.Nsteps):
-            obs                              = self.observations[i,:]                                     #The observation at this timestep
-            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
-            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
+            obs                              = self.observations[i,:]  
+            xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict = predict (xφ,xf,A,B,C,D,self.Fx,self.Fy,self.Fz,self.Qa,self.Qb, self.Qc, self.Qd)                                   #The observation at this timestep
+            xφ,xf, A,B,C,D,likelihood_value = update(xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
 
          
@@ -255,9 +285,9 @@ class KalmanFilter:
         f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
         
         #Precompute transition/Q/R Kalman matrices
-        F = self.F 
-        F_transpose = self.F_transpose
-        Q = self.Q * sigma_p**2
+        #F = self.F 
+        #F_transpose = self.F_transpose
+        #Q = self.Q * sigma_p**2
      
         #Initialise x and P
         x = self.x0 
