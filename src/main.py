@@ -6,8 +6,8 @@ from system_parameters import SystemParameters,NestedSamplerSettings
 from pulsars import Pulsars
 from synthetic_data import SyntheticData
 from model import PhaseModel
-#from kalman_filter_optimised import KalmanFilter
-from kalman_filter import KalmanFilter
+from kalman_filter_optimised import KalmanFilter
+#from kalman_filter import KalmanFilter
 from priors import bilby_priors_dict
 from bilby_wrapper import BilbySampler
 
@@ -37,7 +37,6 @@ def bilby_inference_run(config_file):
     #Define the model to be used by the Kalman Filter
     model = PhaseModel(P,PTA)
     
-    
     #Initialise the Kalman filter
     KF = KalmanFilter(model,data.phi_measured,PTA)
 
@@ -58,7 +57,6 @@ def bilby_inference_run(config_file):
 
     #Now run the Bilby sampler
     BilbySampler(KF,init_parameters,priors,NS_settings)
-
 
 
 
