@@ -7,6 +7,17 @@ logging.getLogger(name="KalmanGW").setLevel(logging.INFO)
 import configparser
 from pathlib import Path
 
+
+
+
+
+
+def get_project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+
+
 """
 Class of parameters which define the system
 """
@@ -113,8 +124,9 @@ class SystemParameters:
 
 
 
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parent.parent
+
+
+
 
     
 """Class of parameters which define the settings used by the Bilby nested sampler
@@ -152,8 +164,8 @@ class NestedSamplerSettings:
                 self.dlogz   = float(INF['dlogz'])
                 self.npoints = int(INF['npoints'])
                 self.npool   = int(INF['npool'])
-                self.plot    = bool(INF['plot'])
-                self.resume  = bool(INF['resume'])
+                self.plot    = eval(INF['plot']) #cast to boolean
+                self.resume  = eval(INF['resume']) #cast to boolean
 
             else: #just assign canonical values. Almost never used, just here for consistency
                 self.label   = label
