@@ -5,7 +5,8 @@ import logging
 from system_parameters import SystemParameters,NestedSamplerSettings
 from pulsars import Pulsars
 from synthetic_data import SyntheticData
-from model_optimised import PhaseModel
+from model import PhaseModel
+#from kalman_filter_optimised import KalmanFilter
 from kalman_filter import KalmanFilter
 from priors import bilby_priors_dict
 from bilby_wrapper import BilbySampler
@@ -22,7 +23,7 @@ def bilby_inference_run(config_file):
     logger = logging.getLogger().setLevel(logging.INFO)
     
     #Setup and create some synthetic data
-    P   = SystemParameters(config_file=None,Npsr=2)    # System parameters read from config file
+    P   = SystemParameters(config_file)    # System parameters read from config file
     PTA = Pulsars(P)                       # All pulsar-related quantities
     data = SyntheticData(PTA,P)            # Given the system parameters and the PTA configuration, create some synthetic data
 
