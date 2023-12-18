@@ -12,7 +12,7 @@ config['GW_PARAMETERS'] = {'Ω':  5e-7, # GW angular frequency
                            'ι':  1.0,  # GW source inclination
                            'δ':  1.0,  # GW source declination
                            'α':  1.0,  # GW source right ascension
-                           'h':  5e-15 # GW strain
+                           'h':  1e-15 # GW strain
                            }
 
 config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the pulsars. Any of "True", "Fixed", "Random". See pulsars.py for example
@@ -25,14 +25,14 @@ config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the
 
 config['OBS_PARAMETERS'] = {'T': 10,       # how long to integrate for in years
                             'cadence': 7,  # the interval between observations in days
-                            'σm':2*np.pi*1e-6,    # measurement noise standard deviation
+                            'σm':2*np.pi*1e-5,    # measurement noise standard deviation
                             'seed':1230,      # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
                              }
 
 
 
 config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what do you want the KF measurement model to be? One of pulsar, earth,null
-                       'label': 'test_conda_env',               # name of the run 
+                       'label': 'sandbox123',               # name of the run 
                        'outdir': "../data/nested_sampling/", # where to store the run output
                        'sampler': 'dynesty',                 # sampler to use
                        'sample': 'rwalk_dynesty',            # sampling method
@@ -45,7 +45,7 @@ config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what d
                       }
 
 
-with open('configs/condatest.ini', 'w') as configfile:
+with open('configs/sandbox123.ini', 'w') as configfile:
   config.write(configfile)
 
 
