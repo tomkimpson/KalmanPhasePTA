@@ -33,13 +33,21 @@ def update(xφ,xf,A,B,C,D,observation,R,GW,ephemeris):
     #First lets get the likelihood
     y_predicted = xφ - xf*GW - GW*ephemeris #The predicted y
     y           = observation - y_predicted #The residual w.r.t actual data
-    S           = A - GW*B - GW*C + (GW**2)*D + R  
+
+
+    #Precompute useful repeated quantities
+    #I am not sure this offers any significant speed up
+    GW_b = GW*B 
+    GW_c = GW*C
+
+
+    S           = A - GW_b - GW_c + (GW**2)*D + R  
     ll          = log_likelihood(y,S)       #and get the likelihood 
 
     #Now lets update x and P
 
-    Kodd = (A - GW * B) / S
-    Keven = (C - GW * D)/S
+    Kodd = (A - GW_b)/S
+    Keven = (C - GW_c)/S
 
     #Update state estimates
     #xφ_new = xφ + Kodd*y
@@ -48,7 +56,7 @@ def update(xφ,xf,A,B,C,D,observation,R,GW,ephemeris):
     #Update covariances
     K1 = 1.0-Kodd
     K2 = 1.0+Keven*GW
-    A_new = A*K1 + Kodd*C*GW 
+    A_new = A*K1 + Kodd*GW_c
     B_new = B*K1 + Kodd*D*GW
     C_new = -A*Keven + C*K2
     D_new = -B*Keven + D*K2

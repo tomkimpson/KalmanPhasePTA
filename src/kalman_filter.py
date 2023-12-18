@@ -43,6 +43,7 @@ Kalman update step
 """
 @njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
+
     H           = construct_H_matrix(GW)    #Determine the H matrix for this step
     y_predicted = H@x - GW*ephemeris        #The predicted y
     y           = observation - y_predicted #The residual w.r.t actual data
