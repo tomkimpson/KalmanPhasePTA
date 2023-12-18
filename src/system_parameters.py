@@ -176,5 +176,5 @@ class NestedSamplerSettings:
                 self.dlogz   = dlogz
                 self.npoints = npoints
                 self.npool   = npool
-                self.plot    = plot
-                self.resume  = resume
+                self.plot    = eval(plot)
+                self.resume  = eval(resume)
