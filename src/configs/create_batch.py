@@ -8,6 +8,10 @@ def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
 
     config = configparser.ConfigParser()
     config.optionxform = lambda option: option #enforce case sensitivity
+    
+    #parse the name of the config file to get a job name
+    job_name = config_path.split('configs/')[-1].split('.')[0]
+    
 
     config['GW_PARAMETERS'] = {'Ω':  5e-7, # GW angular frequency
                             'Φ0': 0.20,# GW phase offset at t=0
@@ -35,7 +39,7 @@ def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
 
 
     config['INFERENCE_PARAMETERS'] = {'measurement_model': 'pulsar',        # what do you want the KF measurement model to be? One of pulsar, earth,null
-                        'label': f'batch_{h}',               # name of the run 
+                        'label': job_name,               # name of the run 
                         'outdir': "../data/nested_sampling/", # where to store the run output
                         'sampler': 'dynesty',                 # sampler to use
                         'sample': 'rwalk_dynesty',            # sampling method
@@ -66,7 +70,7 @@ def create_slurm_job(config_file):
         g.write("#!/bin/bash \n \n")  
         g.write("#SBATCH --ntasks=1 \n")  
         g.write("#SBATCH --mem=8000MB \n")  
-        g.write("#SBATCH --time=96:00:00 \n")  
+        g.write("#SBATCH --time=48:00:00 \n")  
         g.write(f"#SBATCH --job-name={arg_name} \n")  
         g.write(f"#SBATCH --output=outputs/{arg_name}_out.txt \n \n")
 
@@ -78,12 +82,13 @@ def create_slurm_job(config_file):
         
 
 #First create the ini file 
+job_name = 'TW2'
 hvals = [1e-12,1e-13,1e-14,1e-15]
 with open('batch.sh','w') as b: 
     for h in hvals:
         #Create the ini file
-        config_path = f'configs/batch_{h}.ini'
-        create_ini(config_path,h=h,σm=2*np.pi*1e-5)
+        config_path = f'configs/{job_name}_{h}.ini'
+        create_ini(config_path,h=h,σm=2*np.pi*1e-5) #pass the job name explicitly, rather than parsing
 
         #And the slurm job for the ini file
         arg_name = create_slurm_job(config_path)

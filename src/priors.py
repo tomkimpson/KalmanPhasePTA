@@ -27,10 +27,6 @@ def bilby_priors_dict(PTA,P,set_state_parameters_as_known=False,set_measurement_
     #State priors
     init_parameters,priors = _set_prior_on_state_parameters(init_parameters,priors,PTA, set_state_parameters_as_known)
  
-    # #Measurement noise priors. Always known
-    # init_parameters["sigma_m"] = None
-    # priors["sigma_m"] = P.σm
-
     return init_parameters,priors
     
 
@@ -112,11 +108,15 @@ def _add_to_bibly_priors_dict_radians(x,label,init_parameters,priors):
 
 
 
-
+import sys
 """
 Set a prior on the state parameters
 """
 def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_known):
+
+    #In the below we assume that γ is known exactly a priori
+    #We also take there to just be one σp parameter which applies to all pulsars
+    #This condition will need to be loosened once MWE is running. TODO.
 
     if set_parameters_as_known:
         logging.info('Setting fully informative priors on PSR parameters')
@@ -125,31 +125,18 @@ def _set_prior_on_state_parameters(init_parameters,priors,PTA,set_parameters_as_
         init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.fdot,"fdot",init_parameters,priors)           
         init_parameters,priors = _add_to_bibly_priors_dict_constant(PTA.χ,"chi",init_parameters,priors) 
 
-
-        #For now, just one gamma and sigma p
-        #init_parameters["gamma"] = None
-        #priors["gamma"] = PTA.γ[0]
-
         init_parameters["sigma_p"] = None
         priors["sigma_p"] = PTA.σp[0]
     
     else:
-        logging.info('Setting uninformative priors on PSR parameters. NOTE: just a place holder and need updating to be accurate')
-        #TODO
-
+        logging.info('Setting uninformative priors on PSR parameters.')
+      
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.f,"f0",init_parameters,priors,tol=1e-10)      #uniform
         init_parameters,priors = _add_to_bibly_priors_dict_uniform(PTA.fdot,"fdot",init_parameters,priors,tol=0.01) #uniform
         init_parameters,priors = _add_to_bibly_priors_dict_radians(PTA.χ,"chi",init_parameters,priors) 
 
-
-        #For now, just one gamma and sigma p
-        #init_parameters["gamma"] = None
-        #priors["gamma"] = PTA.γ[0] #fixed at true value. Don't bother trying to infer
-
         init_parameters["sigma_p"] = None
         priors["sigma_p"] = bilby.core.prior.LogUniform(PTA.σp[0]/10, PTA.σp[0]*10, 'sigma_p') 
-
-
 
 
     return init_parameters,priors 
@@ -191,13 +178,12 @@ def _set_prior_on_measurement_parameters(init_parameters,priors,P,set_parameters
         priors[f"h"] = P.h
 
     else:
-        logging.info('Setting uninformative priors on GW parameters. NOTE: this needs updating')
+        logging.info('Setting uninformative priors on GW parameters.')
 
             
         #Add all the GW quantities
         init_parameters[f"omega_gw"] = None
-        priors[f"omega_gw"] = bilby.core.prior.Uniform(1e-7, 9e-7, 'omega_gw')
-
+        priors[f"omega_gw"] = bilby.core.prior.Uniform(1e-8, 1e-6, 'omega_gw')
 
         init_parameters[f"phi0_gw"] = None
         priors[f"phi0_gw"] = bilby.core.prior.Uniform(0.0, np.pi/2.0, 'phi0_gw')
@@ -215,7 +201,7 @@ def _set_prior_on_measurement_parameters(init_parameters,priors,P,set_parameters
         priors[f"alpha_gw"] = bilby.core.prior.Uniform(0.0, np.pi, 'alpha_gw')
 
         init_parameters[f"h"] = None
-        priors[f"h"] = bilby.core.prior.Uniform(1e-15, 9e-15, 'h')
+        priors[f"h"] = bilby.core.prior.Uniform(P.h/100.0, P.h*10.0, 'h')
 
 
     return init_parameters,priors 

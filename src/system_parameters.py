@@ -78,7 +78,6 @@ class SystemParameters:
             self.γ             = float(PSR['γ'])
             self.PTA_file      = PSR['PTA_data_file']
 
-
             #OBS parameters
             OBS = config['OBS_PARAMETERS']
 
