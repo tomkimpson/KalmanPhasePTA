@@ -1,4 +1,10 @@
-sbatch slurm_jobs/slurm_TW2_1e-12.sh & 
-sbatch slurm_jobs/slurm_TW2_1e-13.sh & 
-sbatch slurm_jobs/slurm_TW2_1e-14.sh & 
-sbatch slurm_jobs/slurm_TW2_1e-15.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1245.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1246.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1247.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1248.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1249.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1250.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1251.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1252.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1253.sh & 
+sbatch slurm_jobs/slurm_canonical_1_seed_1254.sh & 

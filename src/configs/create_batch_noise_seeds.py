@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
+def create_ini(config_path,seed):
 
     config = configparser.ConfigParser()
     config.optionxform = lambda option: option #enforce case sensitivity
@@ -19,7 +19,7 @@ def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
                             'ι':  1.0,  # GW source inclination
                             'δ':  1.0,  # GW source declination
                             'α':  1.0,  # GW source right ascension
-                            'h':  h # GW strain
+                            'h':  5e-15 # GW strain
                             }
 
     config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the pulsars. Any of "True", "Fixed", "Random". See pulsars.py for example
@@ -32,8 +32,8 @@ def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
 
     config['OBS_PARAMETERS'] = {'T': 10,      # how long to integrate for in years
                                 'cadence': 7, # the interval between observations in days
-                                'σm':σm,      # measurement noise standard deviation
-                                'seed':1230,  # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
+                                'σm':2*np.pi*1e-5,      # measurement noise standard deviation
+                                'seed':s,  # this is the noise seed. It is used for realisations of process noise and measurement noise and also if random pulsars or random process noise covariances are requested 
                                 }
 
 
@@ -45,7 +45,7 @@ def create_ini(config_path,h=5e-15,σm=2*np.pi*1e-5):
                         'sample': 'rwalk_dynesty',            # sampling method
                         'bound': 'live',                      # bounding method. Other options include 'single', 'auto'. See https://dynesty.readthedocs.io/en/latest/faq.html
                         'dlogz': 0.1,                         # termination criteria
-                        'npoints':1000,                       # number of live points
+                        'npoints':2000,                       # number of live points
                         'npool': 1,                           # number of parallel threads
                         'plot': False,                        # do you want to plot the results?
                         'resume':False                        # do you want to resume from an earlier run using an existing pickle file?
@@ -82,14 +82,13 @@ def create_slurm_job(config_file):
         
 
 #First create the ini file 
-job_name = 'TW2'
-hvals = [1e-12,1e-13,1e-14,1e-15]
+job_name = 'canonical_1'
+seeds = np.arange(1245,1255)
 with open('batch.sh','w') as b: 
-    for h in hvals:
+    for s in seeds:
         #Create the ini file
-        config_path = f'configs/{job_name}_{h}.ini'
-        create_ini(config_path,h=h,σm=2*np.pi*1e-5) #pass the job name explicitly, rather than parsing
-
+        config_path = f'configs/{job_name}_seed_{s}.ini'
+        create_ini(config_path,seed=s)
         #And the slurm job for the ini file
         arg_name = create_slurm_job(config_path)
         b.write(f"sbatch slurm_jobs/slurm_{arg_name}.sh & \n")
