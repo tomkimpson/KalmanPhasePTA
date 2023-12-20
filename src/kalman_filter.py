@@ -32,7 +32,7 @@ def construct_H_matrix(some_vector):
     some_matrix = np.zeros(2 * n**2)
     step = 2 * (n + 1)
     some_matrix[::step] = 1
-    some_matrix[1::step] = some_vector
+    some_matrix[1::step] = -some_vector
     some_matrix = some_matrix.reshape(n, 2*n)
 
     return some_matrix
@@ -43,7 +43,7 @@ Kalman update step
 """
 @njit(fastmath=True)
 def update(x, P, observation,R,GW,ephemeris):
-    
+
     H           = construct_H_matrix(GW)    #Determine the H matrix for this step
     y_predicted = H@x - GW*ephemeris        #The predicted y
     y           = observation - y_predicted #The residual w.r.t actual data
@@ -53,7 +53,6 @@ def update(x, P, observation,R,GW,ephemeris):
     xnew        = x + K@y                   #update x
     Pnew        =  P - K@HP                 #update P, using earlier defined HP
     ll          = log_likelihood(y,S)       #and get the likelihood
-    
     return xnew, Pnew,ll
     
 """
@@ -237,7 +236,6 @@ class KalmanFilter:
         
         #y_results[0,:] = y_predicted 
         for i in np.arange(1,self.Nsteps):
-            obs                              = self.observations[i,:]                                     #The observation at this timestep
             x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
             x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value

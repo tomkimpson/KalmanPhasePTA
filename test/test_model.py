@@ -47,5 +47,31 @@ def test_zero_values():
 
 
 
+"""
+Check that the optimised versions are as expected
+"""
+def test_optimised_vs_canonical():
 
 
+
+    P   = system_parameters.SystemParameters()    # User-specifed system parameters
+    PTA = pulsars.Pulsars(P)
+    phase_model = model.PhaseModel(P,PTA)
+
+    F,Q = phase_model.kalman_machinery()
+    Fx,Fy,Fz, Qa,Qb,Qc,Qd = phase_model.optimised_kalman_machinery()
+    
+    #explicit loop
+    for i in range(PTA.Npsr):
+        idx = 2*i
+        assert F[idx,idx] == Fx #Fx is a scalar
+        assert F[idx,idx+1] == Fy #Fy is a scalar
+        assert F[idx+1,idx+1] == Fz #Fz is a scalar
+        
+        
+        #Qs are also scalars at this stage. 
+        assert Q[idx,idx]     == Qa 
+        assert Q[idx,idx+1]   == Qb 
+        assert Q[idx+1,idx]   == Qc 
+        assert Q[idx+1,idx+1] == Qd 
+   

@@ -69,7 +69,7 @@ def plot_synthetic_data(t,state_phi,state_f,phi_measured,psr_index=1,state_phi_p
 
 
 
-def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,labels=None, variables_to_plot=None):
+def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,labels=None, variables_to_plot=None,savefig=None):
 
 
         print(f"Loading results from {path}")
@@ -127,8 +127,8 @@ def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,lab
        
 
 
-#     if savefig is not None:
-#         plt.savefig(f"../data/images/{savefig}.png", bbox_inches="tight",dpi=300)
+        if savefig is not None:
+            plt.savefig(f"../data/images/{savefig}.png", bbox_inches="tight",dpi=300)
         
 
 

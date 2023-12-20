@@ -4,3 +4,5 @@ data/*
 src/configs/*.ini
 src/slurm_jobs/*.sh
 !data/NANOGrav_pulsars.csv
+!data/process_json_file.py
+src/outputs/*
