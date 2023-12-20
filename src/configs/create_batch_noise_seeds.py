@@ -82,7 +82,7 @@ def create_slurm_job(config_file):
         
 
 #First create the ini file 
-job_name = 'canonical_1'
+job_name = 'canonical_2'
 seeds = np.arange(1245,1255)
 with open('batch.sh','w') as b: 
     for s in seeds:
