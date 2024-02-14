@@ -8,6 +8,7 @@ import scienceplots # noqa: F401
 #from scipy import interpolate
 import warnings
 import random
+import glob
 #from parse import * 
 warnings.filterwarnings("error")
 plt.style.use('science')
@@ -143,6 +144,102 @@ def plot_nested_sampling_results(path,injection_parameters=None, ranges=None,lab
 
 
         
+
+def plot_multiple_nested_sampling_results(path_to_files,injection_parameters=None, ranges=None,labels=None,savefig=None):
+
+
+    
+    fig=None
+    for k,f in enumerate(sorted(glob.glob(path_to_files+'*'))):
+        print(f)
+        y_post=np.load(f)
+        nsamples = len(y_post)
+        
+        fs = 20
+   
+        fig = corner.corner(y_post, 
+                            color=f'C{k}',
+                            show_titles=True,
+                            smooth=True,smooth1d=True,
+                            truth_color='C2',
+                            quantiles=None, #[0.16, 0.84],
+                            truths =injection_parameters ,
+                            range=ranges,
+                            labels = labels,
+                            label_kwargs=dict(fontsize=fs),
+                            #axes_scales = axes_scales,
+                            weights = np.ones(nsamples)/nsamples,
+                            plot_datapoints=True,fig=fig)
+
+
+
+
+
+
+
+
+
+        # print(f"Loading results from {path}")
+        # # Load the json results file
+        # f = open(path)
+        # data = json.load(f)
+        # df_posterior = pd.DataFrame(data["posterior"]["content"]) # posterior
+        # evidence = data["log_evidence"]
+        # f.close()
+
+        # #Set-up defaults
+        # if injection_parameters is None:
+        #     injection_parameters = injection_parameters = [5e-7,0.20,2.50,1.0,1.0,1.0,5e-15]
+        # #if ranges is None: #for now let the ranges be whatever
+        #     #ranges=[(4.95e-7,5.05e-7),(-0.2,1.0),(2.0,3.0),(-0.2,np.pi/2),(0.5,1.5),(0.5,1.5),(0.5*5e-15,1.5*5e-15)]
+        # if labels is None:
+        #     labels = [r'$\Omega$',r'$\Phi_0$',r'$\psi$',r'$\iota$', r'$\delta$',r'$\alpha$',r'$h_{0, \times 10}$']
+        # if variables_to_plot is None:
+        #     variables_to_plot = ["omega_gw","phi0_gw","psi_gw","iota_gw","delta_gw","alpha_gw", "h"]
+
+        # #Create a numpy array of the variables you want to plot
+        # y_post = df_posterior[variables_to_plot].to_numpy()
+
+    
+        # #Now plot it using corner.corner
+        # fs = 20
+        # fig = corner.corner(y_post, 
+        #                     color='C0',
+        #                     show_titles=True,
+        #                     smooth=True,smooth1d=True,
+        #                     truth_color='C2',
+        #                     quantiles=[0.16, 0.84], #[0.16, 0.84]
+        #                     truths = injection_parameters,
+        #                     range=ranges,
+        #                     labels = labels,
+        #                     label_kwargs=dict(fontsize=fs))
+        # print(f"Model evidence is {evidence}")
+        # print(f"The number of samples is {len(df_posterior)}")
+        # print(f"The median values are {df_posterior[variables_to_plot].median()}")
+            
+
+        # #Pretty-ify
+        # for ax in fig.axes:
+
+        #     if ax.lines: #is anything plotted on this axis?
+            
+        #         ax.yaxis.set_major_locator(plt.MaxNLocator(3))
+        #         ax.xaxis.set_major_locator(plt.MaxNLocator(3))
+
+        #         ax.yaxis.set_tick_params(labelsize=fs-6)
+        #         ax.xaxis.set_tick_params(labelsize=fs-6)
+
+
+        #         ax.title.set_size(18)
+       
+
+
+        # if savefig is not None:
+        #     plt.savefig(f"../data/images/{savefig}.png", bbox_inches="tight",dpi=300)
+        
+
+
+
 
 #     y_post = df_posterior[variables_to_plot].to_numpy()
 
