@@ -19,7 +19,7 @@ def create_ini(config_path,seed):
                             'ι':  1.0,  # GW source inclination
                             'δ':  1.0,  # GW source declination
                             'α':  1.0,  # GW source right ascension
-                            'h':  5e-15 # GW strain
+                            'h':  1e-12 # GW strain
                             }
 
     config['PSR_PARAMETERS'] = {'process_noise': 'Fixed', # the process noise on the pulsars. Any of "True", "Fixed", "Random". See pulsars.py for example
@@ -82,7 +82,7 @@ def create_slurm_job(config_file):
         
 
 #First create the ini file 
-job_name = 'canonical_2'
+job_name = 'canonical_4'
 seeds = np.arange(1245,1255)
 with open('batch.sh','w') as b: 
     for s in seeds:
