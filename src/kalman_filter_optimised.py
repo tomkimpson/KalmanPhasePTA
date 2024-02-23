@@ -3,7 +3,7 @@ from numba import njit
 #from model import R_function # H function is defined via a class init. #todo change this! we want things defined in a class that is read by KalmanFilter
 
 
-#import sys
+import sys
 
 
 
@@ -24,43 +24,60 @@ def log_likelihood(y,cov):
     return ll
 
 
-@njit(fastmath=True)
-def construct_H_matrix(some_vector):
-   
-    n = len(some_vector)
-    
-    some_matrix = np.zeros(2 * n**2)
-    step = 2 * (n + 1)
-    some_matrix[::step] = 1
-    some_matrix[1::step] = -some_vector
-    some_matrix = some_matrix.reshape(n, 2*n)
-
-    return some_matrix
-
-
 """
 Kalman update step
 """
 @njit(fastmath=True)
-def update(x, P, observation,R,GW,ephemeris):
+def update(xφ,xf,A,B,C,D,observation,R,GW,ephemeris):
 
-    H           = construct_H_matrix(GW)    #Determine the H matrix for this step
-    y_predicted = H@x - GW*ephemeris        #The predicted y
+    #First lets get the likelihood
+    y_predicted = xφ - xf*GW - GW*ephemeris #The predicted y
     y           = observation - y_predicted #The residual w.r.t actual data
-    HP          = H@P                       #Precompute H@P as a variable since we use it twice. Probably offers no real performance gain...
-    S           = np.diag(HP@H.T) + R       #S is diagonal
-    K           = np.divide(P@H.T,S)        #making use of diagonality of S
-    xnew        = x + K@y                   #update x
-    Pnew        =  P - K@HP                 #update P, using earlier defined HP
-    ll          = log_likelihood(y,S)       #and get the likelihood
-    return xnew, Pnew,ll
+
+
+    #Precompute useful repeated quantities
+    #I am not sure this offers any significant speed up
+    GW_b = GW*B 
+    GW_c = GW*C
+
+
+    S           = A - GW_b - GW_c + (GW**2)*D + R  
+    ll          = log_likelihood(y,S)       #and get the likelihood 
+
+    #Now lets update x and P
+
+    Kodd = (A - GW_b)/S
+    Keven = (C - GW_c)/S
+
+    #Update state estimates
+    #xφ_new = xφ + Kodd*y
+    #xf_new = xf + Keven*y
+
+    #Update covariances
+    K1 = 1.0-Kodd
+    K2 = 1.0+Keven*GW
+    A_new = A*K1 + Kodd*GW_c
+    B_new = B*K1 + Kodd*D*GW
+    C_new = -A*Keven + C*K2
+    D_new = -B*Keven + D*K2
+
+    return xφ + Kodd*y,xf + Keven*y, A_new,B_new,C_new,D_new,ll
     
 """
 Kalman predict step
 """
 @njit(fastmath=True)
-def predict(x,P,F,F_transpose,Q): 
-    return F@x,F@P@F_transpose + Q  
+def predict(xφ,xf,A,B,C,D,Fx,Fy,Fz,Qa,Qb,Qc,Qd): 
+
+    xφ_predict = Fx*xφ + Fy*xf
+    xf_predict = Fz*xf
+
+    A_predict = Fx*(A*Fx + C*Fy) + Fy*(B*Fx +D*Fy)
+    B_predict = (B*Fx + D*Fy)*Fz 
+    C_predict = C*Fx*Fz + D*Fy*Fz 
+    D_predict =  D*Fz**2 
+
+    return xφ_predict,xf_predict,A_predict+Qa,B_predict+Qb,C_predict+Qc,D_predict+Qd
 
 
 """
@@ -98,13 +115,11 @@ class KalmanFilter:
         self.t = PTA.t
         self.q = PTA.q
         self.q_products = PTA.q_products
-        #self.ephemeris = PTA.ephemeris
 
         self.Npsr   = self.observations.shape[-1]
         self.Nsteps = self.observations.shape[0]
         
 
-        self.H_function = Model.H_function
 
         # Define a list_of_keys arrays. 
         # This is useful for parsing the Bibly dictionary into arrays efficiently
@@ -112,40 +127,16 @@ class KalmanFilter:
         self.list_of_f_keys        = [f'f0{i}' for i in range(self.Npsr)]
         self.list_of_fdot_keys     = [f'fdot{i}' for i in range(self.Npsr)]
         self.list_of_gamma_keys    = [f'gamma{i}' for i in range(self.Npsr)]
-        #self.list_of_distance_keys = [f'distance{i}' for i in range(self.Npsr)]
-        self.list_of_chi_keys = [f'chi{i}' for i in range(self.Npsr)]
-
+        self.list_of_chi_keys      = [f'chi{i}' for i in range(self.Npsr)]
         self.list_of_sigma_p_keys  = [f'sigma_p{i}' for i in range(self.Npsr)]
         
-
-        #some initiaisation
-        self.x0=  np.zeros(2*self.Npsr) #guess of intial states. Assume for every pulsar the heterodyned phase/frequency = 0
         
-        
-        #How to initialise P ?
-        #Option A - canonical
-        #self.P0=  np.eye(2*self.Npsr)* sigma_m * 1e5 #Guess that the uncertainty in the initial state is a few orders of magnitude greater than the measurement noise
-
-        #Option B - zeroes
-        self.P0=  np.eye(2*self.Npsr)* 0.0
-
-        #Option C - different for phi and f
-        component_array = np.array([[0.0,0.0],
-                                    [0.0,1e-3]])
-
-        #self.P0 = block_diag_view_jit(component_array,self.Npsr) #we need to apply this over N pulsars
-
-        #self.R = R_function(PTA.σm,self.Npsr)
+        #Define some Kalman matrices
         self.R = PTA.σm**2
-        self.F,self.Q = Model.kalman_machinery()
+        self.Fx,self.Fy,self.Fz,self.Qa,self.Qb, self.Qc, self.Qd = Model.optimised_kalman_machinery()
+        self.H_function = Model.H_function
 
-        #We can also precompute the transpose of F
-        self.F_transpose = self.F.T
-
-
-        #Initialise Kalman machinery
-
-
+        self.x0 =  np.zeros((self.Npsr))
 
 
 
@@ -177,8 +168,6 @@ class KalmanFilter:
         #gamma = parameters_dict["gamma"].item()
         sigma_p = parameters_dict["sigma_p"].item()
 
-        #Other noise parameters
-        #sigma_m = parameters_dict["sigma_m"]#.item() #float, known
 
         return omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
                f,fdot,chi,sigma_p
@@ -192,20 +181,8 @@ class KalmanFilter:
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
         f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
+      
         
-        #Precompute transition/Q/R Kalman matrices
-        #F,Q,R are time-independent functions of the parameters
-        #F = F_function(gamma,self.dt,self.Npsr)
-        #R = R_function(sigma_m,self.Npsr)
-        #Q = Q_function(gamma,sigma_p,self.dt,self.Npsr)
-        F = self.F 
-        F_transpose = self.F_transpose
-        Q = self.Q * sigma_p**2
-     
-        #Initialise x and P
-        x = self.x0 
-        P = self.P0
-
         # Precompute the influence of the GW
         # This is solely a function of the parameters and the t-variable but NOT the states
         GW = self.H_function(delta_gw,
@@ -221,6 +198,11 @@ class KalmanFilter:
                                    chi
                                 )
 
+        Qa = self.Qa * sigma_p**2
+        Qb = self.Qb * sigma_p**2
+        Qc = self.Qc * sigma_p**2
+        Qd = self.Qd * sigma_p**2
+
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
         
@@ -228,16 +210,26 @@ class KalmanFilter:
         #Initialise the likelihood
         ll = 0.0
               
+
+        #Split the state x into phi and f
+        xφ = self.x0
+        xf = self.x0
+
+        #...and the covariance
+        A = self.x0
+        B = self.x0
+        C = self.x0
+        D = self.x0
+
+
        
         #Do the first update step
-        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        xφ,xf, A,B,C,D,likelihood_value = update(xφ,xf,A,B,C,D,self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
-
-        
-        #y_results[0,:] = y_predicted 
+  
         for i in np.arange(1,self.Nsteps):
-            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
-            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
+            xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict = predict (xφ,xf,A,B,C,D,self.Fx,self.Fy,self.Fz,Qa,Qb,Qc,Qd)                                   #The observation at this timestep
+            xφ,xf, A,B,C,D,likelihood_value = update(xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
 
          
@@ -246,21 +238,18 @@ class KalmanFilter:
 
 
 
+
+
+    """
+    Copy paste of the above likelihood function, but also returns states. Useful for plotting and checks
+    """
     def likelihood_plotter(self,parameters):
 
         #Map from the dictionary into variables and arrays
         omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
         f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
+      
         
-        #Precompute transition/Q/R Kalman matrices
-        F = self.F 
-        F_transpose = self.F_transpose
-        Q = self.Q * sigma_p**2
-     
-        #Initialise x and P
-        x = self.x0 
-        P = self.P0
-
         # Precompute the influence of the GW
         # This is solely a function of the parameters and the t-variable but NOT the states
         GW = self.H_function(delta_gw,
@@ -276,6 +265,10 @@ class KalmanFilter:
                                    chi
                                 )
 
+        Qa = self.Qa * sigma_p**2
+        Qb = self.Qb * sigma_p**2
+        Qc = self.Qc * sigma_p**2
+        Qd = self.Qd * sigma_p**2
 
         #Define an ephemeris correction
         ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
@@ -284,41 +277,44 @@ class KalmanFilter:
         #Initialise the likelihood
         ll = 0.0
               
+
+        #Split the state x into phi and f
+        xφ = self.x0
+        xf = self.x0
+
+        #...and the covariance
+        A = self.x0
+        B = self.x0
+        C = self.x0
+        D = self.x0
+
+
        
         #Do the first update step
-        x,P,likelihood_value = update(x,P, self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        xφ,xf, A,B,C,D,likelihood_value = update(xφ,xf,A,B,C,D,self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
         ll +=likelihood_value
-
-
-
 
         #Place to store results
         x_results = np.zeros((self.Nsteps,2*self.Npsr))
         y_results = np.zeros((self.Nsteps,self.Npsr))
-
-        
-        #y_results[0,:] = y_predicted 
+  
         for i in np.arange(1,self.Nsteps):
-            obs                              = self.observations[i,:]                                     #The observation at this timestep
-            x_predict, P_predict             = predict(x,P,F,F_transpose,Q)                                           #The predict step
-            x,P,likelihood_value = update(x_predict,P_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
+            xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict = predict (xφ,xf,A,B,C,D,self.Fx,self.Fy,self.Fz,Qa,Qb,Qc,Qd)                                   #The observation at this timestep
+            xφ,xf, A,B,C,D,likelihood_value = update(xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
             ll +=likelihood_value
 
-            H              = construct_H_matrix(GW[i,:])    #Determine the H matrix for this step
-            y_predicted =  H@x - GW[i,:]*ephemeris[i,:]
-    
-            x_results[i,:] = x
+
+
+            y_predicted = xφ - xf*GW[i,:] - GW[i,:]*ephemeris[i,:] #The predicted y
+            x_results[i,:] = np.concatenate([xφ,xf])
             y_results[i,:] = y_predicted
-       
-     
+
+         
         return ll,x_results,y_results
 
 
 
-        
-        
-        
-        
+
 
 
 

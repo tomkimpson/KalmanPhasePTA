@@ -32,3 +32,19 @@ def test_basic_call():
         assert P.h==h[i]
         assert P.T==T[i]
 
+
+"""Make sure that the booleans behave as expected"""
+def test_booleans():
+
+
+    NS_settings = system_parameters.NestedSamplerSettings(resume='True', plot = 'True')
+    assert NS_settings.resume
+    assert NS_settings.plot
+
+    NS_settings = system_parameters.NestedSamplerSettings(resume='False', plot = 'False')
+    assert not NS_settings.resume
+    assert not NS_settings.plot
+
+    NS_settings = system_parameters.NestedSamplerSettings(resume='True', plot = 'False')
+    assert NS_settings.resume
+    assert not NS_settings.plot

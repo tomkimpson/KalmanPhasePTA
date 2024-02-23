@@ -1,0 +1,57 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: paper.aux
+The style file: mnras.bst
+Database file #1: example.bib
+Reallocated buffer (elt_size=1) to 40000 items from 20000.
+Reallocated sv_buffer (elt_size=1) to 40000 items from 20000.
+Reallocated ex_buf (elt_size=1) to 40000 items from 20000.
+Reallocated out_buf (elt_size=1) to 40000 items from 20000.
+Reallocated name_tok (elt_size=4) to 40000 items from 20000.
+Reallocated name_sep_char (elt_size=1) to 40000 items from 20000.
+Warning--I didn't find a database entry for "Price2012"
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty publisher in 2021hgwa.bookE...4V
+You've used 28 entries,
+            2881 wiz_defined-function locations,
+            964 strings with 21409 characters,
+and the built_in function-call counts, 13169 in all, are:
+= -- 1144
+> -- 828
+< -- 69
++ -- 389
+- -- 94
+* -- 1581
+:= -- 1978
+add.period$ -- 0
+call.type$ -- 28
+change.case$ -- 56
+chr.to.int$ -- 25
+cite$ -- 29
+duplicate$ -- 677
+empty$ -- 694
+format.name$ -- 194
+if$ -- 2339
+int.to.chr$ -- 4
+int.to.str$ -- 0
+missing$ -- 30
+newline$ -- 100
+num.names$ -- 182
+pop$ -- 142
+preamble$ -- 1
+purify$ -- 112
+quote$ -- 0
+skip$ -- 442
+stack$ -- 0
+substring$ -- 820
+swap$ -- 353
+text.length$ -- 115
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 246
+warning$ -- 1
+while$ -- 201
+width$ -- 0
+write$ -- 295
+(There were 2 warnings)

@@ -78,7 +78,6 @@ class SystemParameters:
             self.γ             = float(PSR['γ'])
             self.PTA_file      = PSR['PTA_data_file']
 
-
             #OBS parameters
             OBS = config['OBS_PARAMETERS']
 
@@ -176,5 +175,5 @@ class NestedSamplerSettings:
                 self.dlogz   = dlogz
                 self.npoints = npoints
                 self.npool   = npool
-                self.plot    = plot
-                self.resume  = resume
+                self.plot    = eval(plot)
+                self.resume  = eval(resume)
