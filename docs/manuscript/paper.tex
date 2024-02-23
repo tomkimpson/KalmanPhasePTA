@@ -159,7 +159,7 @@ In this section we formulate PTA detection of the stochastic GW background as a 
 
 The instantaneous phase of the $n$-th pulsar is the time integral of the rest frame spin frequency, which itself evolves according to a mean-reverting Ornstein-Uhlenbeck process, described by a Langevin equation with a time-dependent drift term \citep{Vargas}, viz.
 \begin{align}
-	\frac{d \phi_{\rm p}^{(n)}}{dt} &= f_{\rm p}^{(n)} \\ 
+	\frac{d \phi_{\rm p}^{(n)}}{dt} &= f_{\rm p}^{(n)} 	\label{eq:phi_evolution} \\ 
 	\frac{df_{\rm p}^{(n)}}{dt} &= -\gamma^{(n)}	 [f_{\rm p}^{(n)} - f_{\rm em}^{(n)} (t)] + \dot{f}_{\rm em}^{(n)}(t) +\xi^{(n)}(t) \ , 
 	\label{eq:frequency_evolution}
 \end{align}
@@ -373,7 +373,7 @@ Figure \ref{fig:corner}shows...
 
 
 
-
+TBD
 
 
 
@@ -389,6 +389,12 @@ Figure \ref{fig:corner}shows...
 
 
 \section{Extended Kalman filter} \label{sec:kalman}
+
+
+
+\textcolor{red}{TK: not an EKF!!}
+
+
 In this appendix, we describe the extended (non-linear) Kalman filter algorithm used in this paper. The Kalman filter accepts a temporal sequence of noisy measurements $\boldsymbol{Y}(t)$ as an input and recovers a temporal sequence of stochastically evolving system state variables, $\boldsymbol{X}(t)$, which are not observed directly. In this paper ${\boldsymbol{Y}}(t) = \{ f^{(n)}_{\rm m}(t_1), \dots, f^{(n)}_{\rm m}(T_{\rm obs})  \}_{1 \leq n \leq N}$ and ${\boldsymbol{X}}(t) = \{ f^{(n)}_{\rm p}(t_1), a^{n}(t_1), \dots, f^{(n)}_{\rm p}(T_{\rm obs}),a^{(n)}_{\rm p}(T_{\rm obs})   \}_{1 \leq n \leq N}$. Whilst previous state-space analyses of single continuous GW sources have used a linear Kalman filter \citep{KimpsonPTA1,KimpsonPTA2}, the non-linear relation between ${\boldsymbol{Y}}(t)$ and ${\boldsymbol{X}}(t)$ (c.f. Equation \eqref{eq:measurement}) necessitates the use of an extended (non-linear) Kalman filter \citep{zarchan2000fundamentals} in this paper. General recursion relations for the discrete-time extended Kalman filter are written down for an arbitrary dynamical system in Section \ref{sec_kalman_general}. The mapping onto the specific continuous-time state-space model in Section \ref{sec:model} is written down in Section \ref{sec_kalman_specific}.
 
 
@@ -415,11 +421,11 @@ where $\hat{\boldsymbol{P}}_{k|k-1}$ is the covariance of the prediction and $\b
 \end{equation}
 The predict stage is independent of the measurements; the measurement $\boldsymbol{Y}_k$ is included to update the prediction during the update stage as follows:
 \begin{align}
-	\boldsymbol{\epsilon}_{k} &= \boldsymbol{Y}_k - h \left(\hat{\boldsymbol{X}}_{k|k-1} \right)\ , \\
+	\boldsymbol{\epsilon}_{k} &= \boldsymbol{Y}_k - h \left(\hat{\boldsymbol{X}}_{k|k-1} \right)\ , \label{eq:kalman_eq_1}\\
 	\boldsymbol{S}_k &= \boldsymbol{H}_k \hat{\boldsymbol{P}}_{k|k-1} \boldsymbol{H}_k^\intercal + \boldsymbol{R}_k \ , \\
 	\boldsymbol{K}_k &= \hat{\boldsymbol{P}}_{k|k-1} \boldsymbol{H}_k^\intercal \boldsymbol{S}_k^{-1} \ ,\label{eq:kalman gain} \\
 	\hat{\boldsymbol{X}}_{k|k} &=\hat{\boldsymbol{X}}_{k|k-1} +\boldsymbol{K}_k  \boldsymbol{\epsilon}_{k}  \ , \label{eq:kalmangainupdate} \\
-	\hat{\boldsymbol{P}}_{k|k} &= \left( \boldsymbol{I} - \boldsymbol{K}_k \boldsymbol{H}_k \right) 	\hat{\boldsymbol{P}}_{k|k-1} \ .
+	\hat{\boldsymbol{P}}_{k|k} &= \left( \boldsymbol{I} - \boldsymbol{K}_k \boldsymbol{H}_k \right) 	\hat{\boldsymbol{P}}_{k|k-1} \label{eq:kalman_eq_last}\ .
 \end{align}
 where $\boldsymbol{H}_k$ is the Jacobian
 \begin{equation}
@@ -431,67 +437,134 @@ To apply the Kalman filter in practice means specifying the two functions $h(x)$
 and $\boldsymbol{Y}_k$. In Section \ref{sec_kalman_specific} we describe how these components are determined for the state-space model in Section \ref{sec:state_space_formulation}. 
 
 
+
+
+
+
+
+For the form of equations, whilst the measurement are non linear the states are linear. In this case the Jacobian is X and it is sufficient to update X according to the usual linear equation 
+\begin{eqnarray}
+	a = b \label{eq:linear_state_evolution}
+\end{eqnarray}
+
+
 \subsection{State space representation of a PTA analysis}\label{sec_kalman_specific}
-We apply the Kalman recursion relations in Section \ref{sec_kalman_general} to the state-space model of a PTA with $N$ pulsars described in Section \ref{sec:model} as follows. \newline 
+We apply the Kalman recursion relations in Section \ref{sec_kalman_general} to the state-space model of a PTA with $N$ pulsars described in Section \ref{sec:state_space_formulation} as follows. \newline 
 
-
-We identify $\boldsymbol{X}(t)$ with a vector of length $N$ composed of the intrinsic pulsar frequency states, i.e. 
+In practice, to avoid errors that arise from finite precision arithmetic, rather than operating directly on $f_{\rm i}^{(n)}$ and $\phi_{\rm i}^{(n)}$ for $i \in \{ \rm p, \rm m \}$, we undertake a change of variables, 
 \begin{equation}
-	\boldsymbol{X}(t) = \left(f_{\rm p}^{(1)}(t), f_{\rm p}^{(2)}(t), ..., f_{\rm p}^{(N)}(t)\right) \ .
+	f_{\rm i}^{*(n)}(t) = f_{\rm i}^{(n)} - f_{\rm em}^{(n)}
 \end{equation}
-Analogously,  we package the measured pulsar frequencies as
 \begin{equation}
-	\boldsymbol{Y}(t) = \left(f_{\rm m}^{(1)}(t), f_{\rm m}^{(2)}(t), ..., f_{\rm m}^{(N)}(t) \right) \ .
+	\phi_{\rm i}^{*(n)}(t) = \phi_{\rm i}^{(n)} - \phi_{\rm em}^{(n)}
 \end{equation}
-The states evolve according to the continuous stochastic differential equation (c.f. Equation \eqref{eq:frequency_evolution})
+where 
 \begin{equation}
-	d \boldsymbol{X} = \boldsymbol{A} \boldsymbol{X} dt + \boldsymbol{C}(t) dt + \boldsymbol{\Sigma} d \boldsymbol{B}(t) \ , \label{eq:kalmn2}
+	\phi_{\rm em}^{(n)} = \frac{df_{\rm em}^{(n)}}{dt} = \dot{f}_{\rm em}^{(n)}(t_1)
 \end{equation}
-where $\boldsymbol{A}$ is a diagonal $N \times N$ matrix,
-\begin{equation}
-	\boldsymbol{A} = \text{diag} \left(-\gamma^{(1)}, -\gamma^{(2)}, ..., -\gamma^{(N)}\right) \ ,
-\end{equation}
-and $\boldsymbol{C}(t)$ is a time-dependent vector with $n$-th component
-\begin{equation}
-	C^{(n)} =\gamma^{(n)} \left[ f^{(n)} _{\rm em} (t_1) + \dot{f}^{(n)} _{\rm em}(t_1) \, t \right] +  \dot{f}_{\rm em}(t_1)^{(n)} \ .
-\end{equation}
-The $N \times N$ square matrix $\boldsymbol{\Sigma}$  governs the magnitude of the increments of Brownian motion (Wiener process) $d\boldsymbol{B}(t)$, with
-\begin{equation}
-	\boldsymbol{\Sigma} = \text{diag} \left(\sigma^{(1)}, \sigma^{(2)}, ..., \sigma^{(N)}\right) \ .
-\end{equation}
-
-In the idealized model above, each pulsar's rotational state evolves phenomenologically according to a mean-reverting Ornstein-Uhlenbeck process, described by a Langevin equation, Equation \eqref{eq:kalmn2}, whose general solution is given by \citep{gardiner2009stochastic},
-\begin{equation}
-	\boldsymbol{X}(t) = e^{\boldsymbol{A} t} \boldsymbol{X}(0) + \int_0^t e^{\boldsymbol{A}(t-t')} \boldsymbol{C}(t') dt' + \int_0^t e^{\boldsymbol{A}(t-t')} \boldsymbol{\Sigma} d\boldsymbol{B}(t') \ . \label{eq:gardenier}
-\end{equation} 
-From Equation \eqref{eq:gardenier} we construct the discrete, recursive solution for $\boldsymbol{X}(t_k) = \boldsymbol{X}_k$ in the form of Equation \eqref{eq:kalman2}, with
+In this case Equation \eqref{eq:phi_evolution} and Equation \eqref{eq:frequency_evolution} become,
 \begin{align}
-	\boldsymbol{F}_k &= e^{\boldsymbol{A} \Delta t } \  \\
-	&= \text{diag}\left(e^{- \gamma^{(1)} \Delta t},e^{- \gamma^{(2)} \Delta t},...,e^{- \gamma^{(N)} \Delta t} \right) \ ,
+	\frac{d \phi_{\rm p}^{*(n)}}{dt} &= f_{\rm p}^{*(n)} \label{eq:phi_scaled_dyn}\\ 
+	\frac{df_{\rm p}^{*(n)}}{dt} &= -\gamma^{(n)} f_{\rm p}^{(n)} +\xi^{(n)}(t)\label{eq:f_scaled_dyn}  \ . 
 \end{align}
+Similarly, Equation \eqref{eq:measurement} becomes
+\begin{equation}
+	\phi_{\rm m}^{*(n)} = \phi_{\rm m}^{*(n)} - \left[ f_{\rm p}^{*(n)} + f_{\rm em}^{(n)}\right] g^{(n)}(t) +  \varepsilon^{(n)}(t)\ .
+	\label{eq:measurement_scaled}
+\end{equation}
+We identify $\boldsymbol{X}(t)$ with a vector of length $N$ composed of the intrinsic scaled pulsar frequency and phase, i.e. 
+\begin{equation}
+	\boldsymbol{X}(t) = \left(f_{\rm p}^{*(1)}(t), \phi_{\rm p}^{*(1)}(t), ... , f_{\rm p}^{*(N)}(t), \phi_{\rm p}^{*(N)}(t)\right) \ .
+\end{equation}
+Analogously, we package the measured, scaled pulsar phases as
+\begin{equation}
+	\boldsymbol{Y}(t) = \left(\phi_{\rm m}^{*(1)}(t), ..., \phi_{\rm m}^{*(N)}(t) \right) \ .
+\end{equation}
+Going forward we will derive the relevant Kalman matrices for $N=1$. Accordingly we drop the $(n)$-superscript notation. The extension to a general number of $N$ pulsars then follows trivially through the construction of block diagonal matrices. \newline 
+
+
+
+
+
+The states evolve according to the continuous stochastic differential equation (c.f. Equations \eqref{eq:phi_scaled_dyn} and \eqref{eq:f_scaled_dyn})
+\begin{equation}
+	d \boldsymbol{X} = \boldsymbol{A} \boldsymbol{X} dt + \boldsymbol{\Sigma} d \boldsymbol{B}(t) \ , \label{eq:kalmn2}
+\end{equation}
+where $\boldsymbol{A}$ is a $2 \times 2$ matrix,
+\begin{equation}
+	\boldsymbol{A} = \begin{pmatrix}
+		0      & 1  \\
+		0       & -\gamma^{(1)}  
+	\end{pmatrix}
+\end{equation}
+and the $2\times 2$ matrix $\boldsymbol{\Sigma}$ governs the magnitude of the increments of Brownian motion (Wiener process) $d\boldsymbol{B}(t)$, with
+\begin{equation}
+	\boldsymbol{\Sigma} = \begin{pmatrix}
+		0      & 0  \\
+		0       & \sigma^{(1)}
+		\end{pmatrix} \ .
+\end{equation}
+The general solution to Equation \eqref{eq:kalmn2} is \citep{gardiner2009stochastic}
+\begin{equation}
+	\boldsymbol{X}(t) = e^{\boldsymbol{A} t} \boldsymbol{X}(0) + \int_0^t e^{\boldsymbol{A}(t-t')} \boldsymbol{\Sigma} d\boldsymbol{B}(t') \ . \label{eq:gardenier}
+\end{equation} 
+From Equation \eqref{eq:gardenier} we construct the discrete, recursive solution for $\boldsymbol{X}(t_k) = \boldsymbol{X}_k$ in the form of Equation \eqref{eq:linear_state_evolution}, with
 \begin{align}
-	\boldsymbol{G}_k \boldsymbol{u}_k &= \int_{t_k}^{t_{k+1}}  e^{\boldsymbol{A}\left( t_{k+1} - t' \right)}  \boldsymbol{C}(t') dt' \ , \\
-	&= \left(G^{(1)}_k, G^{(2)}_k,...,G^{(N)}_k \right) ,
+	\boldsymbol{F}_k &= \begin{pmatrix}
+		1      & 1-e^{-\gamma^{(1)}\Delta t}/\gamma^{(1)}  \\
+		0       & e^{-\gamma^{(1)}\Delta t}
+	\end{pmatrix} \ ,
 \end{align}
 \begin{equation}
 	\boldsymbol{w}_k = \int_{t_k}^{t_{k+1}} e^{\boldsymbol{A}\left( t_{k+1} - t' \right)} \boldsymbol{\Sigma} d \boldsymbol{B}(t') \ ,  \label{eq:appendix_noise}
 \end{equation}
-\begin{align}
-	G_k^{(n)} =&    f^{(n)}_{\rm em}(t_1) + \dot{f}^{(n)}_{\rm em}(t_1)  \left(\Delta t + t_k \right) \nonumber \\ 
-	&- e^{-\gamma \Delta t} \left[  f^{(n)}_{\rm em}(t_1) +\dot{f}^{(n)}_{\rm em}(t_1)  t_k \right] \ ,
-\end{align}
 and $\Delta t = t_{k+1} - t_k$. From Equation \eqref{eq:appendix_noise} the process noise covariance matrix is
 \begin{equation}
-	\boldsymbol{Q}_k \boldsymbol{\delta}_{kj}= \langle \boldsymbol{\eta}_k \boldsymbol{\eta}_j^\intercal \rangle = \text{diag} \left(Q^{(1)}, Q^{(2)},...,Q^{(N)}\right) \ ,
+	\boldsymbol{Q}_k \boldsymbol{\delta}_{kj}= \langle \boldsymbol{w}_k \boldsymbol{w}_j^\intercal \rangle = \begin{pmatrix}
+		Q_{\rm a}      & Q_{\rm b}  \\
+		Q_{\rm b}       & Q_{\rm c}
+	\end{pmatrix} \ ,
 \end{equation}
 with 
 \begin{equation}
-	Q^{(n)} = \frac{[\sigma^{n}]^2}{2 \gamma^{(n)}} \left[ 1 - e^{-2 \gamma^{(n)} \Delta t}\right] \ .
+	Q_{\rm a} = \frac{\sigma^2}{\gamma^3} \left(\gamma \Delta t - \kappa - \frac{\kappa^2}{2} \right)
 \end{equation}
+\begin{equation}
+	Q_{\rm b} = \frac{\sigma^2}{2 \gamma^2} \kappa^2
+\end{equation}
+\begin{equation}
+	Q_{\rm c} = \frac{\sigma^2}{2 \gamma^2} \left( 1 - e^{-2 \gamma \Delta t}\right)
+\end{equation}
+and,
+\begin{equation}
+	\kappa = 1 - e^{-\gamma \Delta t}
+\end{equation}
+Note lack of k dependence here on f and q. The measurement matrix $\boldsymbol{H}_k$ can be read straightforwardly from Equation \eqref{eq:measurement_scaled} as,
+\begin{eqnarray}
+	\boldsymbol{H}_k = \begin{pmatrix}
+		1 & -g(t_k)
+	\end{pmatrix}
+\end{eqnarray}
+with control term
+\begin{eqnarray}
+	\boldsymbol{B} = -f_{\rm em}(t_k) g(t_k)
+\end{eqnarray}
+The measurement covariance satisfies $\boldsymbol{R}_k = E \left[ \boldsymbol{v} \boldsymbol{v}^\intercal \right] = \sigma^2_{\rm m}$ for all $k$.
 
 
-The two remaining unspecified component matrices of the Kalman filter are the measurement matrix $\boldsymbol{H}_k$ and the measurement covariance matrix $\boldsymbol{R}_k$. These are defined straightforwardly from Equations \eqref{eq:measurement}--\eqref{eq:g_func_trig}. Specifically, 
-$\boldsymbol{H}_k$ is a diagonal matrix where the $n$-th component of the diagonal is given by $g^{(n)}(t_k)$ from Equation \eqref{eq:g_func}. The measurement covariance satisfies $\boldsymbol{R}_k = E \left[ \boldsymbol{v} \boldsymbol{v}^\intercal \right] = \sigma^2_{\rm m}$ for all $k$.
+
+
+
+
+
+
+\subsection{Optimised representation}
+The explicit form of the discretised Kalman matrices given in Appendix \ref{sec_kalman_specific} is straightforward to implement computationally. However, as $N$ grows large there is additional computational burden when performing matrix algebra (especially matrix inversion) outlined in Equations \eqref{eq:kalman_eq_1}--\eqref{eq:kalman_eq_last}. For the purposes of nested sampling, we require our likelihood evaluations to be as fast as possible. Moreover, because our matrices are block diagonal matrices constructed from the $N=1$ components their is a high degree of sparsity. 
+
+
+To circumvent this computational demand for large $N$, we take advantage of the recognition that XYZ.
+
+
 
 
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.5.3)  14 FEB 2024 12:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.5.3)  15 FEB 2024 10:48
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -987,13 +987,13 @@ LaTeX Warning: Reference `sec:psr_measured' on page 3 undefined on input line 3
 LaTeX Warning: Reference `eq:model_evidence' on page 3 undefined on input line 
 325.
 
-<images/ExampleBayesFigure.png, id=250, 743.6583pt x 714.5094pt>
+<images/ExampleBayesFigure.png, id=253, 743.6583pt x 714.5094pt>
 File: images/ExampleBayesFigure.png Graphic file (type png)
 <use images/ExampleBayesFigure.png>
 Package pdftex.def Info: images/ExampleBayesFigure.png  used on input line 331.
 
 (pdftex.def)             Requested size: 507.9958pt x 508.00299pt.
-<images/example_corner_plot.png, id=255, 370.986pt x 386.6445pt>
+<images/example_corner_plot.png, id=258, 370.986pt x 386.6445pt>
 File: images/example_corner_plot.png Graphic file (type png)
 <use images/example_corner_plot.png>
 Package pdftex.def Info: images/example_corner_plot.png  used on input line 346
@@ -1012,39 +1012,33 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 ]
 
-LaTeX Warning: Reference `sec:model' on page 7 undefined on input line 392.
+LaTeX Warning: Reference `sec:model' on page 7 undefined on input line 398.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 403--405
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 427--429
+Underfull \hbox (badness 10000) in paragraph at lines 409--411
 
  []
 
 
-LaTeX Warning: Reference `sec:model' on page 7 undefined on input line 435.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 435--436
+Underfull \hbox (badness 10000) in paragraph at lines 433--435
 
  []
 
 
-LaTeX Warning: Reference `eq:kalman2' on page 7 undefined on input line 467.
+Underfull \hbox (badness 10000) in paragraph at lines 452--453
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 482--484
+
+ []
 
 [7]
 
-LaTeX Warning: Reference `eq:g_func' on page 8 undefined on input line 494.
-
-
 Package natbib Warning: There were undefined citations.
 
-[8
-
-] (./paper.aux)
+[8] (./paper.aux)
 
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 0.5pt have occurred.
@@ -1056,24 +1050,16 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: EDD228CD60489CEEFC4FDAF36A7577D5;2939.
+(rerunfilecheck)             Checksum: 7425A90D51A4AA5232BD52628FC1EBAF;3122.
  ) 
 Here is how much of TeX's memory you used:
- 16599 strings out of 478268
- 254281 string characters out of 5846348
- 556817 words of memory out of 5000000
- 34351 multiletter control sequences out of 15000+600000
+ 16610 strings out of 478268
+ 254497 string characters out of 5846348
+ 557226 words of memory out of 5000000
+ 34356 multiletter control sequences out of 15000+600000
  594643 words of font info for 249 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,15n,78p,1552b,462s stack positions out of 10000i,1000n,20000p,200000b,200000s
-
-pdfTeX warning (dest): name{equation.19} has been referenced but does not exist
-, replaced by a fixed one
-
-
-pdfTeX warning (dest): name{equation.18} has been referenced but does not exist
-, replaced by a fixed one
-
 
 pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist
 , replaced by a fixed one
@@ -1098,10 +1084,10 @@ ublic/txfonts/txsya.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/
 newtx/txsys.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/newtx/zt
 mb.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></
 usr/local/texlive/2022/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
-Output written on paper.pdf (8 pages, 535056 bytes).
+Output written on paper.pdf (8 pages, 537383 bytes).
 PDF statistics:
- 516 PDF objects out of 1000 (max. 8388607)
- 451 compressed objects within 5 object streams
- 100 named destinations out of 1000 (max. 500000)
- 139 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 534 PDF objects out of 1000 (max. 8388607)
+ 469 compressed objects within 5 object streams
+ 106 named destinations out of 1000 (max. 500000)
+ 147 words of extra memory for PDF output out of 10000 (max. 10000000)
 

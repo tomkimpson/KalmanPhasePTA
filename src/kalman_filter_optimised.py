@@ -240,4 +240,84 @@ class KalmanFilter:
 
 
 
+    """
+    Copy paste of the above likelihood function, but also returns states. Useful for plotting and checks
+    """
+    def likelihood_plotter(self,parameters):
+
+        #Map from the dictionary into variables and arrays
+        omega_gw,phi0_gw,psi_gw,iota_gw,delta_gw,alpha_gw,h,\
+        f,fdot,chi,sigma_p = self.parse_dictionary(parameters) 
+      
+        
+        # Precompute the influence of the GW
+        # This is solely a function of the parameters and the t-variable but NOT the states
+        GW = self.H_function(delta_gw,
+                                   alpha_gw,
+                                   psi_gw,
+                                   self.q,
+                                   self.q_products,
+                                   h,
+                                   iota_gw,
+                                   omega_gw,
+                                   self.t,
+                                   phi0_gw,
+                                   chi
+                                )
+
+        Qa = self.Qa * sigma_p**2
+        Qb = self.Qb * sigma_p**2
+        Qc = self.Qc * sigma_p**2
+        Qd = self.Qd * sigma_p**2
+
+        #Define an ephemeris correction
+        ephemeris = f + np.outer(self.t,fdot) #ephemeris correction
+        
+        
+        #Initialise the likelihood
+        ll = 0.0
+              
+
+        #Split the state x into phi and f
+        xφ = self.x0
+        xf = self.x0
+
+        #...and the covariance
+        A = self.x0
+        B = self.x0
+        C = self.x0
+        D = self.x0
+
+
+       
+        #Do the first update step
+        xφ,xf, A,B,C,D,likelihood_value = update(xφ,xf,A,B,C,D,self.observations[0,:],self.R,GW[0,:],ephemeris[0,:])
+        ll +=likelihood_value
+
+        #Place to store results
+        x_results = np.zeros((self.Nsteps,2*self.Npsr))
+        y_results = np.zeros((self.Nsteps,self.Npsr))
+  
+        for i in np.arange(1,self.Nsteps):
+            xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict = predict (xφ,xf,A,B,C,D,self.Fx,self.Fy,self.Fz,Qa,Qb,Qc,Qd)                                   #The observation at this timestep
+            xφ,xf, A,B,C,D,likelihood_value = update(xφ_predict, xf_predict, A_predict, B_predict, C_predict, D_predict, self.observations[i,:],self.R,GW[i,:],ephemeris[i,:]) #The update step    
+            ll +=likelihood_value
+
+
+
+            y_predicted = xφ - xf*GW[i,:] - GW[i,:]*ephemeris[i,:] #The predicted y
+            x_results[i,:] = np.concatenate([xφ,xf])
+            y_results[i,:] = y_predicted
+
+         
+        return ll,x_results,y_results
+
+
+
+
+
+
+
+
+
 
